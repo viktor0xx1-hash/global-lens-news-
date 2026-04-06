@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: articles
+    // Fields:
+    //   - title: string (required)
+    //   - summary: string (optional)
+    //   - content: string (required)
+    //   - author: string (optional)
+    //   - category: string (optional)
+    //   - imageUrl: string (optional)
+    //   - videoUrl: string (optional)
+    //   - publishedAt: timestamp (required)
+    //   - isBreaking: bool (optional)
+    //   - language: string (required)
+    //
+    // Collection: live-updates
+    // Fields:
+    //   - content: string (required)
+    //   - timestamp: timestamp (required)
+    //   - isBreaking: bool (optional)
+    //   - language: string (required)
+    //
+    // Collection: users
+    // Fields:
+    //   - role: string (required)
+    //   - email: string (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "viktor0xx1@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidArticle(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+             data.publishedAt is timestamp &&
+             data.language is string && data.language.size() >= 2 && data.language.size() <= 5 &&
+             (!('videoUrl' in data) || data.videoUrl is string);
+    }
+
+    function isValidLiveUpdate(data) {
+      return data.content is string && data.content.size() > 0 && data.content.size() < 1000 &&
+             data.timestamp is timestamp &&
+             data.language is string && data.language.size() >= 2 && data.language.size() <= 5 &&
+             (!('videoUrl' in data) || data.videoUrl is string);
+    }
+
+    // Rules
+    match /articles/{articleId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidArticle(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /live-updates/{updateId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidLiveUpdate(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}
