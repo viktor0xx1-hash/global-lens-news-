@@ -16,9 +16,20 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
 
   useEffect(() => {
     // Check for redirect result
-    getRedirectResult(auth).catch(console.error);
+    getRedirectResult(auth).then((result) => {
+      if (result?.user) {
+        console.log("Successfully signed in via redirect:", result.user.email);
+      }
+    }).catch((error) => {
+      console.error("Auth redirect error:", error);
+      // If redirect fails, we might want to alert the user or log it
+      if (error.code === 'auth/redirect-uri-mismatch') {
+        alert("Security Error: The redirect URL is not authorized. Please check Google Cloud settings.");
+      }
+    });
 
     return onAuthStateChanged(auth, (u) => {
+      console.log("Auth state changed:", u ? u.email : "Logged out");
       setUser(u);
       setLoading(false);
     });
@@ -158,7 +169,14 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               >
                 <LogOut className="w-4 h-4" /> {t('Sign Out')}
               </button>
-            ) : null}
+            ) : (
+              <button 
+                onClick={signIn}
+                className="flex items-center gap-2 px-4 py-2 bg-bbc-red text-white text-sm font-medium rounded hover:bg-red-700 transition-all"
+              >
+                {t('Sign In')}
+              </button>
+            )}
           </div>
         </div>
       </div>
