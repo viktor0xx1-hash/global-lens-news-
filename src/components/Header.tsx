@@ -36,7 +36,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
   }, []);
 
   const adminEmails = ["viktor0xx1@gmail.com"];
-  const isAdmin = user?.email && adminEmails.includes(user.email);
+  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
   return (
     <header className="border-b border-gray-200 sticky top-0 bg-white z-50">

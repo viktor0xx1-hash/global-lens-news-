@@ -20,12 +20,22 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
   }, []);
 
   const adminEmails = ["viktor0xx1@gmail.com"];
-  const isAdmin = user?.email && adminEmails.includes(user.email);
+  const isAdmin = user?.email && adminEmails.includes(user.email.toLowerCase());
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(DONATION_CONFIG.BTC_ADDRESS);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const showDebugInfo = () => {
+    const info = {
+      isLoggedIn: !!user,
+      email: user?.email || 'none',
+      isAdmin: isAdmin,
+      authReady: !loading
+    };
+    alert(`DEBUG AUTH:\nLogged In: ${info.isLoggedIn}\nEmail: ${info.email}\nIs Admin: ${info.isAdmin}\nReady: ${info.authReady}`);
   };
 
   return (
@@ -95,6 +105,9 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
               </svg>
               {t('Gmail')}
             </a>
+            <button onClick={showDebugInfo} className="text-gray-300 hover:text-gray-500 transition-colors">
+              [debug auth]
+            </button>
           </div>
         </div>
       </div>
