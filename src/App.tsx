@@ -41,7 +41,7 @@ export default function App() {
           </div>
         </main>
 
-        <Footer onPolicyClick={(title, content) => setSelectedPolicy({ title, content })} />
+        <Footer onPolicyClick={(title, content) => setSelectedPolicy({ title, content })} onAdminClick={() => setShowAdmin(true)} />
 
         {showAdmin && <AdminDashboard onClose={() => setShowAdmin(false)} />}
         <AnimatePresence>

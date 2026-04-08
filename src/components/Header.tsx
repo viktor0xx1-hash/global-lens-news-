@@ -1,20 +1,27 @@
 import { useState, useEffect } from 'react';
 import { auth, signIn, logOut } from '../firebase';
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
-import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
 import { useLanguage, languages } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClick: () => void, onBookmarksClick: () => void }) {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const { currentLanguage, setLanguage, t } = useLanguage();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useUserPreferences();
 
   useEffect(() => {
-    return onAuthStateChanged(auth, (u) => setUser(u));
+    // Check for redirect result
+    getRedirectResult(auth).catch(console.error);
+
+    return onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setLoading(false);
+    });
   }, []);
 
   const adminEmails = ["viktor0xx1@gmail.com"];
@@ -126,14 +133,32 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               <Bookmark className="w-5 h-5 text-gray-600" />
             </button>
 
-            {isAdmin && (
+            {loading ? (
+              <div className="w-8 h-8 border-2 border-bbc-red border-t-transparent rounded-full animate-spin" />
+            ) : isAdmin ? (
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={onAdminClick}
+                  className="flex items-center gap-2 px-4 py-2 bg-bbc-dark text-white text-sm font-medium rounded hover:bg-black transition-all shadow-lg shadow-black/10"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> {t('Dashboard')}
+                </button>
+                <button 
+                  onClick={logOut}
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
+                  title={t('Sign Out')}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : user ? (
               <button 
-                onClick={onAdminClick}
-                className="flex items-center gap-2 px-4 py-2 bg-bbc-dark text-white text-sm font-medium rounded hover:bg-black transition-all"
+                onClick={logOut}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded hover:bg-gray-50 transition-all"
               >
-                <LayoutDashboard className="w-4 h-4" /> {t('Dashboard')}
+                <LogOut className="w-4 h-4" /> {t('Sign Out')}
               </button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
