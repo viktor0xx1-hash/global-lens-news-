@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -10,7 +10,11 @@ import firebaseConfig from '../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const storage = getStorage(app);
-export const auth = getAuth(app);
+// Initialize Auth with explicit local persistence for better mobile reliability
+export const auth = initializeAuth(app, {
+  persistence: browserLocalPersistence,
+});
+
 export const googleProvider = new GoogleAuthProvider();
 
 // Test connection to Firestore
@@ -77,4 +81,5 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 export const signIn = () => signInWithRedirect(auth, googleProvider);
+export const signInPopup = () => signInWithPopup(auth, googleProvider);
 export const logOut = () => signOut(auth);

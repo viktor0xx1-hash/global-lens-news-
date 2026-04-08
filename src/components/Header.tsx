@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { auth, signIn, logOut } from '../firebase';
+import { auth, signIn, signInPopup, logOut } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
 import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
@@ -170,12 +170,20 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                 <LogOut className="w-4 h-4" /> {t('Sign Out')}
               </button>
             ) : (
-              <button 
-                onClick={signIn}
-                className="flex items-center gap-2 px-4 py-2 bg-bbc-red text-white text-sm font-medium rounded hover:bg-red-700 transition-all"
-              >
-                {t('Sign In')}
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={signIn}
+                  className="px-3 py-1.5 bg-bbc-red text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-all"
+                >
+                  {t('Sign In')}
+                </button>
+                <button 
+                  onClick={signInPopup}
+                  className="px-3 py-1.5 border border-gray-200 text-gray-600 text-[10px] font-bold uppercase tracking-widest rounded hover:bg-gray-50 transition-all"
+                >
+                  {t('Popup')}
+                </button>
+              </div>
             )}
           </div>
         </div>
