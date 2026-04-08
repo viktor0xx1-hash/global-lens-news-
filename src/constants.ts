@@ -111,6 +111,6 @@ Thank you for trusting Global Lens as your source for global news and analysis.
 };
 
 export const DONATION_CONFIG = {
-  BTC_ADDRESS: "bc1q778u2wqcha9zcpq4cc6ln4l3x7dszr93gpeanq",
+  BTC_ADDRESS: "bc1q2dwuc0pfkqg6v7xz57je7m0pvs4dqtmuxrjuqp",
   MESSAGE: "Global Lens is an independent platform dedicated to truth. Your support helps us counter disinformation and maintain our operations."
 };
