@@ -20,6 +20,7 @@ service cloud.firestore {
     // Collection: live-updates
     // Fields:
     //   - title: string (optional)
+    //   - summary: string (optional)
     //   - content: string (required)
     //   - imageUrls: list (optional)
     //   - videoUrls: list (optional)
@@ -57,6 +58,7 @@ service cloud.firestore {
       return data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
              data.timestamp is timestamp &&
              (!('title' in data) || data.title is string) &&
+             (!('summary' in data) || data.summary is string) &&
              (!('imageUrls' in data) || data.imageUrls is list) &&
              (!('videoUrls' in data) || data.videoUrls is list);
     }

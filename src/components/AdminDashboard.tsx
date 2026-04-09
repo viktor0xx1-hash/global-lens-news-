@@ -26,6 +26,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   // Update Form
   const [update, setUpdate] = useState({
     title: '',
+    summary: '',
     content: '',
     videoUrls: [] as string[],
     imageUrls: [] as string[],
@@ -89,7 +90,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         ...update,
         timestamp: serverTimestamp()
       });
-      setUpdate({ title: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
+      setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
       alert('Live update posted!');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'live-updates');
@@ -270,6 +271,13 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none font-serif text-lg font-bold"
                 value={update.title}
                 onChange={e => setUpdate({...update, title: e.target.value})}
+              />
+              <textarea 
+                required
+                placeholder="Ticker Summary (Short & Punchy)"
+                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-20 text-sm"
+                value={update.summary}
+                onChange={e => setUpdate({...update, summary: e.target.value})}
               />
               <textarea 
                 required

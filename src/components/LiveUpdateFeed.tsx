@@ -6,12 +6,12 @@ import { motion } from 'motion/react';
 interface LiveUpdate {
   id: string;
   title?: string;
+  summary?: string;
   content: string;
   videoUrls?: string[];
   imageUrls?: string[];
   timestamp: any;
   isBreaking?: boolean;
-  language: string;
 }
 
 export default function LiveUpdateFeed() {

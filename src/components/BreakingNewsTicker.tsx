@@ -6,10 +6,10 @@ import { Zap } from 'lucide-react';
 
 interface LiveUpdate {
   id: string;
+  summary?: string;
   content: string;
   timestamp: any;
   isBreaking?: boolean;
-  language: string;
 }
 
 export default function BreakingNewsTicker() {
@@ -64,7 +64,7 @@ export default function BreakingNewsTicker() {
               exit={{ y: -20, opacity: 0 }}
               className="absolute inset-0 text-sm font-medium truncate"
             >
-              {displayUpdates[currentIndex].content}
+              {displayUpdates[currentIndex].summary || displayUpdates[currentIndex].content}
             </motion.div>
           </AnimatePresence>
         </div>
