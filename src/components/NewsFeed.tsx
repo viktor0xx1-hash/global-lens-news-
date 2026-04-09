@@ -3,7 +3,6 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { Clock, User, Tag, Bookmark } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 
 interface Article {
@@ -23,7 +22,6 @@ interface Article {
 
 export default function NewsFeed({ onArticleClick }: { onArticleClick: (article: Article) => void }) {
   const [articles, setArticles] = useState<Article[]>([]);
-  const { t } = useLanguage();
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
@@ -45,7 +43,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-[1px] bg-gray-200" />
           <p className="text-sm font-serif italic text-gray-400 tracking-widest uppercase">
-            {t('Gathering Global Intelligence')}
+            Gathering Global Intelligence
           </p>
           <div className="w-12 h-[1px] bg-gray-200" />
         </div>
@@ -78,7 +76,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
             />
             {mainArticle.isBreaking && (
               <div className="absolute top-4 left-4 bg-bbc-red text-white px-3 py-1 text-xs font-bold uppercase tracking-widest">
-                {t('Breaking News')}
+                Breaking News
               </div>
             )}
           </div>
@@ -108,7 +106,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
       {/* Side Articles */}
       <div className="lg:col-span-4 space-y-8">
         <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 border-b border-gray-100 pb-2">
-          {t('Trending Now')}
+          Trending Now
         </h3>
         {sideArticles.map((article, idx) => (
           <motion.article 

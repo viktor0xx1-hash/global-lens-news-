@@ -3,7 +3,6 @@ import { auth, signIn, signInPopup, logOut } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
 import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -11,7 +10,6 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { t, currentLanguage } = useLanguage();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useUserPreferences();
 
   useEffect(() => {
@@ -46,13 +44,13 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
             <Logo />
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium uppercase tracking-wider text-gray-600">
               <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <Globe className="w-4 h-4" /> {t('World')}
+                <Globe className="w-4 h-4" /> World
               </a>
               <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" /> {t('Geopolitics')}
+                <TrendingUp className="w-4 h-4" /> Geopolitics
               </a>
               <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <ShieldAlert className="w-4 h-4" /> {t('Security')}
+                <ShieldAlert className="w-4 h-4" /> Security
               </a>
             </nav>
           </div>
@@ -81,18 +79,18 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                     className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50"
                   >
                     <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500">{t('Notifications')}</h4>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500">Notifications</h4>
                       <button 
                         onClick={markAllAsRead}
                         className="text-[10px] font-bold uppercase tracking-widest text-bbc-red hover:underline"
                       >
-                        {t('Mark all as read')}
+                        Mark all as read
                       </button>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length === 0 ? (
                         <div className="p-8 text-center text-gray-400 text-xs font-medium uppercase tracking-widest">
-                          {t('No notifications')}
+                          No notifications
                         </div>
                       ) : (
                         notifications.map((notif) => (
@@ -103,7 +101,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                           >
                             {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-bbc-red" />}
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-bbc-red">{t(notif.title)}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-bbc-red">{notif.title}</span>
                               <span className="text-[8px] text-gray-400 uppercase font-bold">{new Date(notif.timestamp?.toMillis ? notif.timestamp.toMillis() : notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                             <p className="text-xs font-medium text-gray-700 line-clamp-2">{notif.message}</p>
@@ -133,13 +131,13 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                     onClick={onAdminClick}
                     className="flex items-center gap-2 px-3 py-1.5 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-black transition-all"
                   >
-                    <LayoutDashboard className="w-3 h-3" /> {t('Dashboard')}
+                    <LayoutDashboard className="w-3 h-3" /> Dashboard
                   </button>
                 )}
                 <button 
                   onClick={logOut}
                   className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
-                  title={t('Sign Out')}
+                  title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>

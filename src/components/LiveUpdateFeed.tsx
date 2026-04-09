@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { useLanguage } from '../contexts/LanguageContext';
 
 interface LiveUpdate {
   id: string;
@@ -17,7 +16,6 @@ interface LiveUpdate {
 
 export default function LiveUpdateFeed() {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
-  const { t } = useLanguage();
 
   useEffect(() => {
     const q = query(
@@ -41,7 +39,7 @@ export default function LiveUpdateFeed() {
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-bbc-red rounded-full animate-ping" />
           <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-bbc-red">
-            {t('Live Updates')}
+            Live Updates
           </h3>
         </div>
       </div>
@@ -93,7 +91,7 @@ export default function LiveUpdateFeed() {
         
         {updates.length === 0 && (
           <div className="text-xs text-gray-400 font-medium uppercase tracking-wider pl-8">
-            {t('Monitoring channels...')}
+            Monitoring channels...
           </div>
         )}
       </div>

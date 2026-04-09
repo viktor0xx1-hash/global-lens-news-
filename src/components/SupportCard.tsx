@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { Copy, Check, Heart } from 'lucide-react';
 import { DONATION_CONFIG } from '../constants';
-import { useLanguage } from '../contexts/LanguageContext';
 
 export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sidebar' | 'article' }) {
   const [copied, setCopied] = useState(false);
-  const { t } = useLanguage();
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(DONATION_CONFIG.BTC_ADDRESS);
@@ -21,9 +19,9 @@ export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sideba
             <Heart className="w-5 h-5 text-bbc-red fill-current" />
           </div>
           <div>
-            <h4 className="text-lg font-serif font-bold text-bbc-dark mb-2 italic">{t('Support Independent Truth')}</h4>
+            <h4 className="text-lg font-serif font-bold text-bbc-dark mb-2 italic">Support Independent Truth</h4>
             <p className="text-sm text-gray-600 leading-relaxed mb-6">
-              {t(DONATION_CONFIG.MESSAGE)}
+              {DONATION_CONFIG.MESSAGE}
             </p>
             
             <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -35,7 +33,7 @@ export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sideba
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-bbc-dark text-white text-xs font-bold uppercase tracking-widest hover:bg-black transition-all whitespace-nowrap"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                {copied ? t('Copied') : t('Copy BTC Address')}
+                {copied ? 'Copied' : 'Copy BTC Address'}
               </button>
             </div>
           </div>
@@ -48,11 +46,11 @@ export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sideba
     <div className="bg-white border border-gray-100 p-6 shadow-sm">
       <div className="flex items-center gap-2 mb-4 text-bbc-red">
         <Heart className="w-4 h-4 fill-current" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{t('Support Global Lens')}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Support Global Lens</span>
       </div>
-      <h4 className="text-xl font-serif font-bold mb-3 italic leading-tight text-bbc-dark">{t('Help us sustain our mission')}</h4>
+      <h4 className="text-xl font-serif font-bold mb-3 italic leading-tight text-bbc-dark">Help us sustain our mission</h4>
       <p className="text-xs text-gray-500 leading-relaxed mb-6">
-        {t(DONATION_CONFIG.MESSAGE)}
+        {DONATION_CONFIG.MESSAGE}
       </p>
       
       <div className="space-y-3">
@@ -64,7 +62,7 @@ export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sideba
           className="w-full flex items-center justify-center gap-2 py-3 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all"
         >
           {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-          {copied ? t('Copied') : t('Copy BTC Address')}
+          {copied ? 'Copied' : 'Copy BTC Address'}
         </button>
       </div>
     </div>

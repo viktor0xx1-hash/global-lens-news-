@@ -1,7 +1,6 @@
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { X, Clock, User, Tag, Share2, Bookmark } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import SupportCard from './SupportCard';
 
@@ -21,7 +20,6 @@ interface Article {
 }
 
 export default function ArticleView({ article, onClose }: { article: Article, onClose: () => void }) {
-  const { t } = useLanguage();
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   const displayArticle = article;
@@ -143,7 +141,7 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           </h1>
           
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium uppercase tracking-wider border-y border-gray-100 py-6">
-            <span className="flex items-center gap-2"><User className="w-4 h-4" /> {t('By')} {displayArticle.author}</span>
+            <span className="flex items-center gap-2"><User className="w-4 h-4" /> By {displayArticle.author}</span>
             <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(displayArticle.publishedAt?.toDate()).toLocaleString()}</span>
           </div>
         </header>
@@ -158,9 +156,9 @@ export default function ArticleView({ article, onClose }: { article: Article, on
 
         <footer className="mt-20 pt-12 border-t border-gray-100">
           <div className="bg-gray-50 p-8 text-center">
-            <h4 className="text-xl font-serif font-bold mb-2">{t('Global Lens Journalism')}</h4>
+            <h4 className="text-xl font-serif font-bold mb-2">Global Lens Journalism</h4>
             <p className="text-gray-600 font-serif italic">
-              {t('Reporting on the forces that shape our world.')}
+              Reporting on the forces that shape our world.
             </p>
           </div>
         </footer>

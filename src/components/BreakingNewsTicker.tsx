@@ -3,7 +3,6 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
 
 interface LiveUpdate {
   id: string;
@@ -16,7 +15,6 @@ interface LiveUpdate {
 export default function BreakingNewsTicker() {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { t } = useLanguage();
 
   useEffect(() => {
     const q = query(
@@ -55,7 +53,7 @@ export default function BreakingNewsTicker() {
     <div className="bg-bbc-red text-white py-2 overflow-hidden relative">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
         <div className="flex items-center gap-2 font-bold uppercase tracking-tighter text-sm whitespace-nowrap border-r border-white/30 pr-4">
-          <Zap className="w-4 h-4 fill-white animate-pulse" /> {t('Breaking')}
+          <Zap className="w-4 h-4 fill-white animate-pulse" /> Breaking
         </div>
         <div className="relative flex-1 h-6">
           <AnimatePresence mode="wait">

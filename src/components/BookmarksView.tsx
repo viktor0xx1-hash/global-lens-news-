@@ -3,7 +3,6 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { X, Bookmark, Clock, Tag } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 
 interface Article {
@@ -18,7 +17,6 @@ interface Article {
 export default function BookmarksView({ onClose, onArticleClick }: { onClose: () => void, onArticleClick: (article: any) => void }) {
   const [bookmarkedArticles, setBookmarkedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useLanguage();
   const { bookmarks, toggleBookmark } = useUserPreferences();
 
   useEffect(() => {
@@ -57,7 +55,7 @@ export default function BookmarksView({ onClose, onArticleClick }: { onClose: ()
     >
       <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-bbc-dark text-white">
         <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
-          <Bookmark className="w-5 h-5 text-bbc-red fill-current" /> {t('Bookmarks')}
+          <Bookmark className="w-5 h-5 text-bbc-red fill-current" /> Bookmarks
         </h2>
         <button onClick={onClose} className="hover:text-bbc-red transition-colors">
           <X className="w-6 h-6" />
@@ -73,7 +71,7 @@ export default function BookmarksView({ onClose, onArticleClick }: { onClose: ()
           <div className="text-center py-12">
             <Bookmark className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
-              {t('No bookmarks yet')}
+              No bookmarks yet
             </p>
           </div>
         ) : (
