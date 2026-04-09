@@ -1,6 +1,6 @@
 import { POLICIES, DONATION_CONFIG } from '../constants';
 import Logo from './Logo';
-import { auth, signIn, logOut } from '../firebase';
+import { auth, signIn, signInPopup, logOut } from '../firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { useState, useEffect } from 'react';
 import { Heart, Copy, Check } from 'lucide-react';
