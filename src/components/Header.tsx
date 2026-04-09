@@ -144,12 +144,33 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               <Bookmark className="w-5 h-5 text-gray-600" />
             </button>
 
-            {isAdmin && (
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-bbc-red border-t-transparent rounded-full animate-spin" />
+            ) : user ? (
+              <div className="flex items-center gap-3">
+                {isAdmin && (
+                  <button 
+                    onClick={onAdminClick}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-black transition-all"
+                  >
+                    <LayoutDashboard className="w-3 h-3" /> {t('Dashboard')}
+                  </button>
+                )}
+                <button 
+                  onClick={logOut}
+                  className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
+                  title={t('Sign Out')}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
               <button 
-                onClick={onAdminClick}
-                className="flex items-center gap-2 px-4 py-2 bg-bbc-dark text-white text-sm font-medium rounded hover:bg-black transition-all"
+                onClick={signIn}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
+                title={t('Sign In')}
               >
-                <LayoutDashboard className="w-4 h-4" /> {t('Dashboard')}
+                <LogOut className="w-5 h-5 rotate-180" />
               </button>
             )}
           </div>

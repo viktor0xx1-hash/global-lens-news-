@@ -80,6 +80,20 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(JSON.stringify(errInfo));
 }
 
-export const signIn = () => signInWithRedirect(auth, googleProvider);
-export const signInPopup = () => signInWithPopup(auth, googleProvider);
+export const signIn = async () => {
+  try {
+    await signInWithRedirect(auth, googleProvider);
+  } catch (error) {
+    console.error("Sign in error:", error);
+    alert("Sign in failed. Please check your browser settings or try again.");
+  }
+};
+export const signInPopup = async () => {
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    console.error("Popup sign in error:", error);
+    alert("Popup sign in failed. You may need to allow popups in your browser.");
+  }
+};
 export const logOut = () => signOut(auth);

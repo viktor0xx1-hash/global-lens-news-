@@ -60,10 +60,18 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
               <li><button onClick={() => onPolicyClick('DMCA Policy', POLICIES.DMCA)} className="hover:text-bbc-red transition-colors">{t('DMCA')}</button></li>
               <li><button onClick={() => onPolicyClick('Cookie Policy', POLICIES.COOKIES)} className="hover:text-bbc-red transition-colors">{t('Cookies')}</button></li>
               <li className="pt-2 border-t border-gray-50">
-                {user ? (
-                  <button onClick={logOut} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal">{t('Sign Out')}</button>
+                {loading ? (
+                  <span className="text-gray-300 italic lowercase font-normal">{t('loading...')}</span>
+                ) : user ? (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 lowercase italic font-normal">{user.email}</span>
+                    <button onClick={logOut} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal underline text-left">{t('Sign Out')}</button>
+                  </div>
                 ) : (
-                  <button onClick={signIn} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal">{t('Staff')}</button>
+                  <div className="flex flex-col gap-1">
+                    <button onClick={signIn} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal text-left">{t('Staff')}</button>
+                    <button onClick={signInPopup} className="text-[9px] text-gray-300 hover:text-gray-500 lowercase italic font-normal text-left">{t('Trouble logging in?')}</button>
+                  </div>
                 )}
               </li>
             </ul>
