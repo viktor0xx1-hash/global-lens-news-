@@ -41,9 +41,17 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "viktor0xx1@gmail.com" && request.auth.token.email_verified == true));
+      // Check for explicit email first as it doesn't require a document lookup
+      let isExplicitAdmin = isAuthenticated() && 
+                            request.auth.token.email.lower() == "viktor0xx1@gmail.com" && 
+                            request.auth.token.email_verified == true;
+      
+      // Then check for role in users collection if document exists
+      let hasAdminRole = isAuthenticated() && 
+                         exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+                         
+      return isExplicitAdmin || hasAdminRole;
     }
 
     function isValidArticle(data) {
@@ -51,7 +59,11 @@ service cloud.firestore {
              data.content is string && data.content.size() > 0 && data.content.size() < 100000 &&
              data.publishedAt is timestamp &&
              (!('imageUrls' in data) || data.imageUrls is list) &&
-             (!('videoUrls' in data) || data.videoUrls is list);
+             (!('videoUrls' in data) || data.videoUrls is list) &&
+             (!('isBreaking' in data) || data.isBreaking is bool) &&
+             (!('author' in data) || data.author is string) &&
+             (!('category' in data) || data.category is string) &&
+             (!('summary' in data) || data.summary is string);
     }
 
     function isValidLiveUpdate(data) {
@@ -60,7 +72,8 @@ service cloud.firestore {
              (!('title' in data) || data.title is string) &&
              (!('summary' in data) || data.summary is string) &&
              (!('imageUrls' in data) || data.imageUrls is list) &&
-             (!('videoUrls' in data) || data.videoUrls is list);
+             (!('videoUrls' in data) || data.videoUrls is list) &&
+             (!('isBreaking' in data) || data.isBreaking is bool);
     }
 
     // Rules
