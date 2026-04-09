@@ -7,9 +7,6 @@ import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as Video
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [pendingFiles, setPendingFiles] = useState<{ name: string, type: 'image' | 'video' }[]>([]);
-  const uploading = pendingFiles.length > 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateVideoInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,54 +32,75 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     isBreaking: false
   });
 
+  // Track local previews for instant UI feedback
+  const [previews, setPreviews] = useState<{
+    id: string;
+    localUrl: string;
+    remoteUrl?: string;
+    type: 'image' | 'video';
+    progress: number;
+    status: 'uploading' | 'done' | 'error';
+  }[]>([]);
+  const uploading = previews.some(p => p.status === 'uploading');
+
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
-    // Check file size (e.g., limit to 100MB for videos, 10MB for images)
     const sizeLimit = type === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > sizeLimit) {
       alert(`File is too large. Max size for ${type}s is ${type === 'video' ? '100MB' : '10MB'}.`);
       return;
     }
 
-    setUploadProgress(0);
-    setPendingFiles(prev => [...prev, { name: file.name, type }]);
+    const id = Math.random().toString(36).substring(7);
+    const localUrl = URL.createObjectURL(file);
+
+    // Add to previews immediately for instant feedback
+    setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
     
     try {
       const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
-      return new Promise((resolve, reject) => {
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(Math.round(progress));
-          }, 
-          (error) => {
-            console.error("Upload error:", error);
-            alert("Failed to upload file. Please try again.");
-            setPendingFiles(prev => prev.filter(f => f.name !== file.name));
-            reject(error);
-          }, 
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            if (target === 'article') {
-              if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-              else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-            } else {
-              if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-              else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-            }
-            setUploadProgress(0);
-            setPendingFiles(prev => prev.filter(f => f.name !== file.name));
-            resolve(url);
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setPreviews(prev => prev.map(p => p.id === id ? { ...p, progress: Math.round(progress) } : p));
+        }, 
+        (error) => {
+          console.error("Upload error:", error);
+          setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
+          URL.revokeObjectURL(localUrl);
+        }, 
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          
+          // Update the actual form state
+          if (target === 'article') {
+            if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+            else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+          } else {
+            if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+            else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
           }
-        );
-      });
+
+          // Mark preview as done
+          setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url } : p));
+          // We don't revoke immediately so the UI doesn't flicker, but we could
+        }
+      );
     } catch (error) {
       console.error("Upload error:", error);
+      setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
     }
   };
 
   const removeFile = (url: string, type: 'image' | 'video', target: 'article' | 'update') => {
+    // Remove from previews too
+    setPreviews(prev => {
+      const p = prev.find(item => item.remoteUrl === url || item.localUrl === url);
+      if (p) URL.revokeObjectURL(p.localUrl);
+      return prev.filter(item => item.remoteUrl !== url && item.localUrl !== url);
+    });
+
     if (target === 'article') {
       if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
       else setArticle(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
@@ -94,6 +112,10 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
   const handlePostArticle = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (previews.some(p => p.status === 'uploading')) {
+      alert("Please wait for all media to finish uploading before publishing.");
+      return;
+    }
     setLoading(true);
     try {
       await addDoc(collection(db, 'articles'), {
@@ -111,6 +133,10 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
   const handlePostUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (previews.some(p => p.status === 'uploading')) {
+      alert("Please wait for all media to finish uploading before posting.");
+      return;
+    }
     setLoading(true);
     try {
       await addDoc(collection(db, 'live-updates'), {
@@ -200,12 +226,23 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-400">Images</label>
                     <div className="flex flex-wrap gap-2">
-                      {article.imageUrls.map(url => (
-                        <div key={url} className="relative w-20 h-20 group">
-                          <img src={url} className="w-full h-full object-cover rounded border border-gray-200" referrerPolicy="no-referrer" />
+                      {previews.filter(p => p.type === 'image').map(preview => (
+                        <div key={preview.id} className="relative w-20 h-20 group">
+                          <img 
+                            src={preview.localUrl} 
+                            className={`w-full h-full object-cover rounded border border-gray-200 ${preview.status === 'uploading' ? 'opacity-50' : ''}`} 
+                            referrerPolicy="no-referrer" 
+                          />
+                          {preview.status === 'uploading' && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white/80 rounded-full p-1">
+                                <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
+                              </div>
+                            </div>
+                          )}
                           <button 
                             type="button"
-                            onClick={() => removeFile(url, 'image', 'article')}
+                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'image', 'article')}
                             className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />
@@ -230,24 +267,28 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       >
                         <ImageIcon className="w-6 h-6 text-gray-300" />
                       </button>
-                      {pendingFiles.filter(f => f.type === 'image').map((f, i) => (
-                        <div key={i} className="w-20 h-20 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
-                          <Loader2 className="w-6 h-6 text-bbc-red animate-spin" />
-                        </div>
-                      ))}
                     </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-400">Videos</label>
                     <div className="flex flex-wrap gap-2">
-                      {article.videoUrls.map(url => (
-                        <div key={url} className="relative w-20 h-20 group">
-                          <div className="w-full h-full bg-black rounded flex items-center justify-center">
-                            <VideoIcon className="w-6 h-6 text-white" />
+                      {previews.filter(p => p.type === 'video').map(preview => (
+                        <div key={preview.id} className="relative w-20 h-20 group">
+                          <div className="w-full h-full bg-black rounded flex items-center justify-center overflow-hidden">
+                            <video src={preview.localUrl} className={`w-full h-full object-cover ${preview.status === 'uploading' ? 'opacity-30' : ''}`} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              {preview.status === 'uploading' ? (
+                                <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
+                                  <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                </div>
+                              ) : (
+                                <VideoIcon className="w-6 h-6 text-white" />
+                              )}
+                            </div>
                           </div>
                           <button 
                             type="button"
-                            onClick={() => removeFile(url, 'video', 'article')}
+                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'video', 'article')}
                             className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />
@@ -272,11 +313,6 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       >
                         <VideoIcon className="w-6 h-6 text-gray-300" />
                       </button>
-                      {pendingFiles.filter(f => f.type === 'video').map((f, i) => (
-                        <div key={i} className="w-20 h-20 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
-                          <Loader2 className="w-6 h-6 text-bbc-red animate-spin" />
-                        </div>
-                      ))}
                     </div>
                   </div>
                 </div>
@@ -285,14 +321,13 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                      <Loader2 className="w-4 h-4 animate-spin" /> Background Uploading...
                     </div>
-                    <span>{uploadProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                     <div 
                       className="bg-bbc-red h-full transition-all duration-300" 
-                      style={{ width: `${uploadProgress}%` }}
+                      style={{ width: `${previews.reduce((acc, p) => acc + p.progress, 0) / previews.length}%` }}
                     />
                   </div>
                 </div>
@@ -339,26 +374,27 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-gray-400">Media Attachments</label>
                 <div className="flex flex-wrap gap-2">
-                  {update.imageUrls.map(url => (
-                    <div key={url} className="relative w-16 h-16 group">
-                      <img src={url} className="w-full h-full object-cover rounded border border-gray-200" referrerPolicy="no-referrer" />
+                  {previews.map(preview => (
+                    <div key={preview.id} className="relative w-16 h-16 group">
+                      {preview.type === 'image' ? (
+                        <img 
+                          src={preview.localUrl} 
+                          className={`w-full h-full object-cover rounded border border-gray-200 ${preview.status === 'uploading' ? 'opacity-50' : ''}`} 
+                          referrerPolicy="no-referrer" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-black rounded flex items-center justify-center overflow-hidden">
+                          <video src={preview.localUrl} className={`w-full h-full object-cover ${preview.status === 'uploading' ? 'opacity-30' : ''}`} />
+                        </div>
+                      )}
+                      {preview.status === 'uploading' && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
+                        </div>
+                      )}
                       <button 
                         type="button"
-                        onClick={() => removeFile(url, 'image', 'update')}
-                        className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  {update.videoUrls.map(url => (
-                    <div key={url} className="relative w-16 h-16 group">
-                      <div className="w-full h-full bg-black rounded flex items-center justify-center">
-                        <VideoIcon className="w-4 h-4 text-white" />
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={() => removeFile(url, 'video', 'update')}
+                        onClick={() => removeFile(preview.remoteUrl || preview.localUrl, preview.type, 'update')}
                         className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3 h-3" />
@@ -386,25 +422,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   >
                     <ImageIcon className="w-5 h-5 text-gray-300" />
                   </button>
-                  {pendingFiles.map((f, i) => (
-                    <div key={i} className="w-16 h-16 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
-                      <Loader2 className="w-5 h-5 text-bbc-red animate-spin" />
-                    </div>
-                  ))}
                 </div>
               </div>
               {uploading && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
                     <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                      <Loader2 className="w-4 h-4 animate-spin" /> Background Uploading...
                     </div>
-                    <span>{uploadProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
                     <div 
                       className="bg-bbc-red h-full transition-all duration-300" 
-                      style={{ width: `${uploadProgress}%` }}
+                      style={{ width: `${previews.reduce((acc, p) => acc + p.progress, 0) / previews.length}%` }}
                     />
                   </div>
                 </div>
