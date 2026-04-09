@@ -144,46 +144,13 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               <Bookmark className="w-5 h-5 text-gray-600" />
             </button>
 
-            {loading ? (
-              <div className="w-8 h-8 border-2 border-bbc-red border-t-transparent rounded-full animate-spin" />
-            ) : isAdmin ? (
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={onAdminClick}
-                  className="flex items-center gap-2 px-4 py-2 bg-bbc-dark text-white text-sm font-medium rounded hover:bg-black transition-all shadow-lg shadow-black/10"
-                >
-                  <LayoutDashboard className="w-4 h-4" /> {t('Dashboard')}
-                </button>
-                <button 
-                  onClick={logOut}
-                  className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
-                  title={t('Sign Out')}
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : user ? (
+            {isAdmin && (
               <button 
-                onClick={logOut}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded hover:bg-gray-50 transition-all"
+                onClick={onAdminClick}
+                className="flex items-center gap-2 px-4 py-2 bg-bbc-dark text-white text-sm font-medium rounded hover:bg-black transition-all"
               >
-                <LogOut className="w-4 h-4" /> {t('Sign Out')}
+                <LayoutDashboard className="w-4 h-4" /> {t('Dashboard')}
               </button>
-            ) : (
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={signIn}
-                  className="px-3 py-1.5 bg-bbc-red text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-red-700 transition-all"
-                >
-                  {t('Sign In')}
-                </button>
-                <button 
-                  onClick={signInPopup}
-                  className="px-3 py-1.5 border border-gray-200 text-gray-600 text-[10px] font-bold uppercase tracking-widest rounded hover:bg-gray-50 transition-all"
-                >
-                  {t('Popup')}
-                </button>
-              </div>
             )}
           </div>
         </div>
