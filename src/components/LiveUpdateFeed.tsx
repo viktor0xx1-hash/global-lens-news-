@@ -72,6 +72,7 @@ export default function LiveUpdateFeed() {
                     src={url} 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
+                    loading="lazy"
                   />
                 </div>
               ))}

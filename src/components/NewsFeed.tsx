@@ -27,7 +27,8 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
   useEffect(() => {
     const q = query(
       collection(db, 'articles'), 
-      orderBy('publishedAt', 'desc')
+      orderBy('publishedAt', 'desc'),
+      limit(15)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
@@ -73,6 +74,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
               alt={mainArticle.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               referrerPolicy="no-referrer"
+              loading="lazy"
             />
             {mainArticle.isBreaking && (
               <div className="absolute top-4 left-4 bg-bbc-red text-white px-3 py-1 text-xs font-bold uppercase tracking-widest">
@@ -123,6 +125,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
                 alt={article.title}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 referrerPolicy="no-referrer"
+                loading="lazy"
               />
             </div>
             <div className="flex-1">
@@ -166,6 +169,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
               </div>
               <h4 className="font-serif font-bold text-xl mb-2 group-hover:text-bbc-red transition-colors">
