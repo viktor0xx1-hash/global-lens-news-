@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2 } from 'lucide-react';
 
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateVideoInputRef = useRef<HTMLInputElement>(null);
 
@@ -34,23 +35,49 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   });
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
+    // Check file size (e.g., limit to 100MB for videos, 10MB for images)
+    const sizeLimit = type === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > sizeLimit) {
+      alert(`File is too large. Max size for ${type}s is ${type === 'video' ? '100MB' : '10MB'}.`);
+      return;
+    }
+
     setUploading(true);
+    setUploadProgress(0);
+    
     try {
       const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
-      
-      if (target === 'article') {
-        if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-        else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-      } else {
-        if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-        else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-      }
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setUploadProgress(Math.round(progress));
+          }, 
+          (error) => {
+            console.error("Upload error:", error);
+            alert("Failed to upload file. Please try again.");
+            setUploading(false);
+            reject(error);
+          }, 
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            if (target === 'article') {
+              if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+              else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+            } else {
+              if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+              else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+            }
+            setUploading(false);
+            setUploadProgress(0);
+            resolve(url);
+          }
+        );
+      });
     } catch (error) {
       console.error("Upload error:", error);
-      alert("Failed to upload file. Please try again.");
-    } finally {
       setUploading(false);
     }
   };
@@ -243,8 +270,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               {uploading && (
-                <div className="flex items-center gap-2 text-bbc-red text-xs font-bold animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                    </div>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-bbc-red h-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
                 </div>
               )}
               <label className="flex items-center gap-2 cursor-pointer">
@@ -338,8 +376,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 </div>
               </div>
               {uploading && (
-                <div className="flex items-center gap-2 text-bbc-red text-xs font-bold animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Uploading file...
+                    </div>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-bbc-red h-full transition-all duration-300" 
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
                 </div>
               )}
               <label className="flex items-center gap-2 cursor-pointer">
