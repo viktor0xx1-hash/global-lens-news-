@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import imageCompression from 'browser-image-compression';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -44,21 +45,40 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const uploading = previews.some(p => p.status === 'uploading');
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
-    const sizeLimit = type === 'video' ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
-    if (file.size > sizeLimit) {
-      alert(`File is too large. Max size for ${type}s is ${type === 'video' ? '100MB' : '10MB'}.`);
-      return;
-    }
-
     const id = Math.random().toString(36).substring(7);
     const localUrl = URL.createObjectURL(file);
 
     // Add to previews immediately for instant feedback
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
-    
+
     try {
+      let fileToUpload = file;
+
+      // Aggressive compression for images to ensure "instant" feel
+      if (type === 'image') {
+        const options = {
+          maxSizeMB: 0.8, // Less than 1MB
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        try {
+          fileToUpload = await imageCompression(file, options);
+        } catch (error) {
+          console.warn("Compression failed, uploading original", error);
+        }
+      } else {
+        // Video size check
+        const sizeLimit = 100 * 1024 * 1024; // 100MB
+        if (file.size > sizeLimit) {
+          alert("Video is too large. Max size is 100MB.");
+          setPreviews(prev => prev.filter(p => p.id !== id));
+          URL.revokeObjectURL(localUrl);
+          return;
+        }
+      }
+
       const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
       uploadTask.on('state_changed', 
         (snapshot) => {
@@ -112,43 +132,63 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
   const handlePostArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (previews.some(p => p.status === 'uploading')) {
-      alert("Please wait for all media to finish uploading before publishing.");
-      return;
-    }
     setLoading(true);
-    try {
-      await addDoc(collection(db, 'articles'), {
-        ...article,
-        publishedAt: serverTimestamp()
-      });
-      alert('Article published successfully!');
-      onClose();
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'articles');
-    } finally {
-      setLoading(false);
+    
+    const finalize = async () => {
+      try {
+        await addDoc(collection(db, 'articles'), {
+          ...article,
+          publishedAt: serverTimestamp()
+        });
+        onClose();
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, 'articles');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (uploading) {
+      const check = setInterval(() => {
+        if (!previews.some(p => p.status === 'uploading')) {
+          clearInterval(check);
+          finalize();
+        }
+      }, 500);
+    } else {
+      finalize();
     }
   };
 
   const handlePostUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (previews.some(p => p.status === 'uploading')) {
-      alert("Please wait for all media to finish uploading before posting.");
-      return;
-    }
     setLoading(true);
-    try {
-      await addDoc(collection(db, 'live-updates'), {
-        ...update,
-        timestamp: serverTimestamp()
-      });
-      setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
-      alert('Live update posted!');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'live-updates');
-    } finally {
-      setLoading(false);
+
+    const finalize = async () => {
+      try {
+        await addDoc(collection(db, 'live-updates'), {
+          ...update,
+          timestamp: serverTimestamp()
+        });
+        setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
+        setPreviews([]);
+        onClose();
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, 'live-updates');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (uploading) {
+      const check = setInterval(() => {
+        if (!previews.some(p => p.status === 'uploading')) {
+          clearInterval(check);
+          finalize();
+        }
+      }, 500);
+    } else {
+      finalize();
     }
   };
 
@@ -317,21 +357,6 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   </div>
                 </div>
               </div>
-              {uploading && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Background Uploading...
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-bbc-red h-full transition-all duration-300" 
-                      style={{ width: `${previews.reduce((acc, p) => acc + p.progress, 0) / previews.length}%` }}
-                    />
-                  </div>
-                </div>
-              )}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox"
@@ -342,10 +367,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold uppercase text-bbc-red">Mark as Breaking News</span>
               </label>
               <button 
-                disabled={loading || uploading}
+                disabled={loading}
                 className="w-full bg-bbc-red text-white py-4 font-bold uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send className="w-5 h-5" /> {loading ? 'Publishing...' : uploading ? 'Uploading Media...' : 'Publish Article'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {uploading ? 'Finalizing Uploads...' : 'Publishing...'}
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Publish Article
+                  </>
+                )}
               </button>
             </form>
           ) : (
@@ -424,21 +459,6 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   </button>
                 </div>
               </div>
-              {uploading && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-bbc-red text-xs font-bold">
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Background Uploading...
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                    <div 
-                      className="bg-bbc-red h-full transition-all duration-300" 
-                      style={{ width: `${previews.reduce((acc, p) => acc + p.progress, 0) / previews.length}%` }}
-                    />
-                  </div>
-                </div>
-              )}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox"
@@ -449,10 +469,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold uppercase text-bbc-red">Major Breaking Update</span>
               </label>
               <button 
-                disabled={loading || uploading}
+                disabled={loading}
                 className="w-full bg-bbc-dark text-white py-4 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send className="w-5 h-5" /> {loading ? 'Posting...' : uploading ? 'Uploading Media...' : 'Post Update'}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {uploading ? 'Finalizing Uploads...' : 'Posting...'}
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Post Update
+                  </>
+                )}
               </button>
             </form>
           )}
