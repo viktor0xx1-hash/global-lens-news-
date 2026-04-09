@@ -8,8 +8,9 @@ import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as Video
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const updateVideoInputRef = useRef<HTMLInputElement>(null);
+  const articleImageInputRef = useRef<HTMLInputElement>(null);
+  const articleVideoInputRef = useRef<HTMLInputElement>(null);
+  const updateMediaInputRef = useRef<HTMLInputElement>(null);
 
   // Article Form
   const [article, setArticle] = useState({
@@ -51,66 +52,64 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     // Add to previews immediately for instant feedback
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
 
-    try {
-      let fileToUpload = file;
+    // Run the upload process in the background without blocking
+    (async () => {
+      try {
+        let fileToUpload = file;
 
-      // Aggressive compression for images to ensure "instant" feel
-      if (type === 'image') {
-        const options = {
-          maxSizeMB: 0.8, // Less than 1MB
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-        };
-        try {
-          fileToUpload = await imageCompression(file, options);
-        } catch (error) {
-          console.warn("Compression failed, uploading original", error);
-        }
-      } else {
-        // Video size check
-        const sizeLimit = 100 * 1024 * 1024; // 100MB
-        if (file.size > sizeLimit) {
-          alert("Video is too large. Max size is 100MB.");
-          setPreviews(prev => prev.filter(p => p.id !== id));
-          URL.revokeObjectURL(localUrl);
-          return;
-        }
-      }
-
-      const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
-      uploadTask.on('state_changed', 
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setPreviews(prev => prev.map(p => p.id === id ? { ...p, progress: Math.round(progress) } : p));
-        }, 
-        (error) => {
-          console.error("Upload error:", error);
-          setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
-          URL.revokeObjectURL(localUrl);
-        }, 
-        async () => {
-          const url = await getDownloadURL(uploadTask.snapshot.ref);
-          
-          // Update the actual form state
-          if (target === 'article') {
-            if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-            else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-          } else {
-            if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-            else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+        // Aggressive compression for images
+        if (type === 'image') {
+          const options = {
+            maxSizeMB: 0.8,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          try {
+            fileToUpload = await imageCompression(file, options);
+          } catch (error) {
+            console.warn("Compression failed, using original", error);
           }
-
-          // Mark preview as done
-          setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url } : p));
-          // We don't revoke immediately so the UI doesn't flicker, but we could
+        } else {
+          const sizeLimit = 100 * 1024 * 1024; // 100MB
+          if (file.size > sizeLimit) {
+            alert("Video is too large (Max 100MB)");
+            setPreviews(prev => prev.filter(p => p.id !== id));
+            URL.revokeObjectURL(localUrl);
+            return;
+          }
         }
-      );
-    } catch (error) {
-      console.error("Upload error:", error);
-      setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
-    }
+
+        const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+
+        uploadTask.on('state_changed', 
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            setPreviews(prev => prev.map(p => p.id === id ? { ...p, progress: Math.round(progress) } : p));
+          }, 
+          (error) => {
+            console.error("Upload error:", error);
+            setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
+          }, 
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            
+            if (target === 'article') {
+              if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+              else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+            } else {
+              if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+              else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+            }
+
+            setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url } : p));
+          }
+        );
+      } catch (error) {
+        console.error("Process error:", error);
+        setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
+      }
+    })();
   };
 
   const removeFile = (url: string, type: 'image' | 'video', target: 'article' | 'update') => {
@@ -274,11 +273,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                             referrerPolicy="no-referrer" 
                           />
                           {preview.status === 'uploading' && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="bg-white/80 rounded-full p-1">
-                                <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
+                            <>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="bg-white/80 rounded-full p-1">
+                                  <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
+                                </div>
                               </div>
-                            </div>
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden">
+                                <div 
+                                  className="h-full bg-bbc-red transition-all duration-300" 
+                                  style={{ width: `${preview.progress}%` }}
+                                />
+                              </div>
+                            </>
                           )}
                           <button 
                             type="button"
@@ -291,22 +298,23 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       ))}
                       <button 
                         type="button"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.multiple = true;
-                          input.onchange = (e: any) => {
-                            const files = Array.from(e.target.files as FileList);
-                            files.forEach(file => handleFileUpload(file, 'image', 'article'));
-                            e.target.value = ''; // Reset
-                          };
-                          input.click();
-                        }}
+                        onClick={() => articleImageInputRef.current?.click()}
                         className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
                       >
                         <ImageIcon className="w-6 h-6 text-gray-300" />
                       </button>
+                      <input 
+                        type="file"
+                        ref={articleImageInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          files.forEach(file => handleFileUpload(file, 'image', 'article'));
+                          e.target.value = '';
+                        }}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -318,9 +326,17 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                             <video src={preview.localUrl} className={`w-full h-full object-cover ${preview.status === 'uploading' ? 'opacity-30' : ''}`} />
                             <div className="absolute inset-0 flex items-center justify-center">
                               {preview.status === 'uploading' ? (
-                                <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
-                                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                                </div>
+                                <>
+                                  <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
+                                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                  </div>
+                                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 overflow-hidden">
+                                    <div 
+                                      className="h-full bg-bbc-red transition-all duration-300" 
+                                      style={{ width: `${preview.progress}%` }}
+                                    />
+                                  </div>
+                                </>
                               ) : (
                                 <VideoIcon className="w-6 h-6 text-white" />
                               )}
@@ -337,22 +353,23 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       ))}
                       <button 
                         type="button"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'video/*';
-                          input.multiple = true;
-                          input.onchange = (e: any) => {
-                            const files = Array.from(e.target.files as FileList);
-                            files.forEach(file => handleFileUpload(file, 'video', 'article'));
-                            e.target.value = ''; // Reset
-                          };
-                          input.click();
-                        }}
+                        onClick={() => articleVideoInputRef.current?.click()}
                         className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
                       >
                         <VideoIcon className="w-6 h-6 text-gray-300" />
                       </button>
+                      <input 
+                        type="file"
+                        ref={articleVideoInputRef}
+                        className="hidden"
+                        accept="video/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          files.forEach(file => handleFileUpload(file, 'video', 'article'));
+                          e.target.value = '';
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -423,9 +440,17 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                         </div>
                       )}
                       {preview.status === 'uploading' && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
-                        </div>
+                        <>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden">
+                            <div 
+                              className="h-full bg-bbc-red transition-all duration-300" 
+                              style={{ width: `${preview.progress}%` }}
+                            />
+                          </div>
+                        </>
                       )}
                       <button 
                         type="button"
@@ -438,25 +463,26 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   ))}
                   <button 
                     type="button"
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'file';
-                      input.accept = 'image/*,video/*';
-                      input.multiple = true;
-                      input.onchange = (e: any) => {
-                        const files = Array.from(e.target.files as FileList);
-                        files.forEach(file => {
-                          const type = file.type.startsWith('image/') ? 'image' : 'video';
-                          handleFileUpload(file, type, 'update');
-                        });
-                        e.target.value = ''; // Reset
-                      };
-                      input.click();
-                    }}
+                    onClick={() => updateMediaInputRef.current?.click()}
                     className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
                   >
                     <ImageIcon className="w-5 h-5 text-gray-300" />
                   </button>
+                  <input 
+                    type="file"
+                    ref={updateMediaInputRef}
+                    className="hidden"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      files.forEach(file => {
+                        const type = file.type.startsWith('image/') ? 'image' : 'video';
+                        handleFileUpload(file, type, 'update');
+                      });
+                      e.target.value = '';
+                    }}
+                  />
                 </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
