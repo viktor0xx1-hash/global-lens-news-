@@ -12,23 +12,25 @@ service cloud.firestore {
     //   - content: string (required)
     //   - author: string (optional)
     //   - category: string (optional)
-    //   - imageUrl: string (optional)
-    //   - videoUrl: string (optional)
+    //   - imageUrls: list (optional)
+    //   - videoUrls: list (optional)
     //   - publishedAt: timestamp (required)
     //   - isBreaking: bool (optional)
-    //   - language: string (required)
     //
     // Collection: live-updates
     // Fields:
+    //   - title: string (optional)
     //   - content: string (required)
+    //   - imageUrls: list (optional)
+    //   - videoUrls: list (optional)
     //   - timestamp: timestamp (required)
     //   - isBreaking: bool (optional)
-    //   - language: string (required)
     //
     // Collection: users
     // Fields:
-    //   - role: string (required)
-    //   - email: string (required)
+    //   - role: string (optional)
+    //   - email: string (optional)
+    //   - bookmarks: list (optional)
     //
     // ===============================================================
 
@@ -44,18 +46,19 @@ service cloud.firestore {
     }
 
     function isValidArticle(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 50000 &&
+      return data.title is string && data.title.size() > 0 && data.title.size() < 500 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 100000 &&
              data.publishedAt is timestamp &&
-             data.language is string && data.language.size() >= 2 && data.language.size() <= 5 &&
-             (!('videoUrl' in data) || data.videoUrl is string);
+             (!('imageUrls' in data) || data.imageUrls is list) &&
+             (!('videoUrls' in data) || data.videoUrls is list);
     }
 
     function isValidLiveUpdate(data) {
-      return data.content is string && data.content.size() > 0 && data.content.size() < 1000 &&
+      return data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
              data.timestamp is timestamp &&
-             data.language is string && data.language.size() >= 2 && data.language.size() <= 5 &&
-             (!('videoUrl' in data) || data.videoUrl is string);
+             (!('title' in data) || data.title is string) &&
+             (!('imageUrls' in data) || data.imageUrls is list) &&
+             (!('videoUrls' in data) || data.videoUrls is list);
     }
 
     // Rules
@@ -73,6 +76,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow update: if isAuthenticated() && request.auth.uid == userId && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks']);
+      allow create: if isAuthenticated() && request.auth.uid == userId;
       allow write: if isAdmin();
     }
   }

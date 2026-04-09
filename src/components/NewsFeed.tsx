@@ -2,11 +2,9 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import Markdown from 'react-markdown';
-import { Clock, User, Tag, Languages, Bookmark } from 'lucide-react';
+import { Clock, User, Tag, Bookmark } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import { translateArticle } from '../services/translationService';
 
 interface Article {
   id: string;
@@ -15,7 +13,9 @@ interface Article {
   content: string;
   author: string;
   category: string;
-  imageUrl: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+  videoUrls?: string[];
   publishedAt: any;
   isBreaking?: boolean;
   language: string;
@@ -23,9 +23,7 @@ interface Article {
 
 export default function NewsFeed({ onArticleClick }: { onArticleClick: (article: Article) => void }) {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [translatedArticles, setTranslatedArticles] = useState<Article[]>([]);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const { currentLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
@@ -41,35 +39,6 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const translateFeed = async () => {
-      if (articles.length === 0) return;
-      
-      if (currentLanguage.code === 'en') {
-        setTranslatedArticles(articles);
-        return;
-      }
-
-      setIsTranslating(true);
-      try {
-        // Translate sequentially to avoid rate limits
-        const translated = [];
-        for (const article of articles) {
-          const tArticle = await translateArticle(article, currentLanguage.name);
-          translated.push(tArticle);
-        }
-        setTranslatedArticles(translated);
-      } catch (error) {
-        console.error("Feed translation error:", error);
-        setTranslatedArticles(articles);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-
-    translateFeed();
-  }, [articles, currentLanguage.code]);
-
   if (articles.length === 0) {
     return (
       <div className="py-32 flex flex-col items-center justify-center text-center">
@@ -84,18 +53,13 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
     );
   }
 
-  const displayArticles = translatedArticles.length > 0 ? translatedArticles : articles;
+  const displayArticles = articles;
   const mainArticle = displayArticles[0];
   const sideArticles = displayArticles.slice(1, 4);
   const restArticles = displayArticles.slice(4);
 
   return (
     <div className="relative">
-      {isTranslating && (
-        <div className="absolute -top-12 right-0 flex items-center gap-2 text-bbc-red text-xs font-bold uppercase tracking-widest animate-pulse z-10">
-          <Languages className="w-4 h-4" /> {t('Translating to')} {currentLanguage.name}...
-        </div>
-      )}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Main Feature */}
       <div className="lg:col-span-8">
@@ -107,7 +71,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
         >
           <div className="relative aspect-video overflow-hidden bg-gray-100 mb-4">
             <img 
-              src={mainArticle.imageUrl || `https://picsum.photos/seed/${mainArticle.id}/1200/675`} 
+              src={mainArticle.imageUrls?.[0] || mainArticle.imageUrl || `https://picsum.photos/seed/${mainArticle.id}/1200/675`} 
               alt={mainArticle.title}
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               referrerPolicy="no-referrer"
@@ -157,7 +121,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
           >
             <div className="w-24 h-24 flex-shrink-0 overflow-hidden bg-gray-100">
               <img 
-                src={article.imageUrl || `https://picsum.photos/seed/${article.id}/200/200`} 
+                src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/200/200`} 
                 alt={article.title}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 referrerPolicy="no-referrer"
@@ -200,7 +164,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
             >
               <div className="aspect-video overflow-hidden bg-gray-100 mb-4">
                 <img 
-                  src={article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
+                  src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   referrerPolicy="no-referrer"

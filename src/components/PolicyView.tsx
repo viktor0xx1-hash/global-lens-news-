@@ -2,35 +2,9 @@ import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useState, useEffect } from 'react';
-import { translateText } from '../services/translationService';
 
 export default function PolicyView({ title, content, onClose }: { title: string, content: string, onClose: () => void }) {
-  const { currentLanguage, t } = useLanguage();
-  const [translatedContent, setTranslatedContent] = useState(content);
-  const [isTranslating, setIsTranslating] = useState(false);
-
-  useEffect(() => {
-    const translate = async () => {
-      if (currentLanguage.code === 'en') {
-        setTranslatedContent(content);
-        return;
-      }
-
-      setIsTranslating(true);
-      try {
-        const translated = await translateText(content, currentLanguage.name);
-        setTranslatedContent(translated);
-      } catch (error) {
-        console.error("Policy translation error:", error);
-        setTranslatedContent(content);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-
-    translate();
-  }, [content, currentLanguage.code]);
+  const { t } = useLanguage();
 
   return (
     <motion.div 
@@ -42,11 +16,6 @@ export default function PolicyView({ title, content, onClose }: { title: string,
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-sm font-bold uppercase tracking-widest text-bbc-dark">{t(title)}</h2>
-            {isTranslating && (
-              <span className="text-[10px] font-bold uppercase tracking-widest text-bbc-red animate-pulse">
-                {t('Translating...')}
-              </span>
-            )}
           </div>
           <button 
             onClick={onClose}
@@ -59,7 +28,7 @@ export default function PolicyView({ title, content, onClose }: { title: string,
 
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="markdown-body prose prose-slate max-w-none">
-          <Markdown>{translatedContent}</Markdown>
+          <Markdown>{content}</Markdown>
         </div>
       </div>
     </motion.div>

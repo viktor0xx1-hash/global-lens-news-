@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { Radio, Languages } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { translateUpdate } from '../services/translationService';
 
 interface LiveUpdate {
   id: string;
+  title?: string;
   content: string;
-  videoUrl?: string;
+  videoUrls?: string[];
+  imageUrls?: string[];
   timestamp: any;
   isBreaking?: boolean;
   language: string;
@@ -17,9 +17,7 @@ interface LiveUpdate {
 
 export default function LiveUpdateFeed() {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
-  const [translatedUpdates, setTranslatedUpdates] = useState<LiveUpdate[]>([]);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const { currentLanguage, t } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const q = query(
@@ -35,35 +33,7 @@ export default function LiveUpdateFeed() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const translateFeed = async () => {
-      if (updates.length === 0) return;
-      
-      if (currentLanguage.code === 'en') {
-        setTranslatedUpdates(updates);
-        return;
-      }
-
-      setIsTranslating(true);
-      try {
-        // Translate sequentially to avoid rate limits
-        const translated = [];
-        for (const update of updates) {
-          translated.push(await translateUpdate(update, currentLanguage.name));
-        }
-        setTranslatedUpdates(translated);
-      } catch (error) {
-        console.error("Live feed translation error:", error);
-        setTranslatedUpdates(updates);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-
-    translateFeed();
-  }, [updates, currentLanguage.code]);
-
-  const displayUpdates = translatedUpdates.length > 0 ? translatedUpdates : updates;
+  const displayUpdates = updates;
 
   return (
     <div className="bg-gray-50 p-6 border border-gray-200">
@@ -74,11 +44,6 @@ export default function LiveUpdateFeed() {
             {t('Live Updates')}
           </h3>
         </div>
-        {isTranslating && (
-          <div className="flex items-center gap-1 text-bbc-red text-[10px] font-bold uppercase tracking-widest animate-pulse">
-            <Languages className="w-3 h-3" /> {t('Translating...')}
-          </div>
-        )}
       </div>
       
       <div className="space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200">
@@ -94,19 +59,35 @@ export default function LiveUpdateFeed() {
             <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">
               {new Date(update.timestamp?.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} GMT
             </div>
+            {update.title && (
+              <h4 className={`text-sm font-bold mb-1 ${update.isBreaking ? 'text-bbc-red' : 'text-bbc-dark'}`}>
+                {update.title}
+              </h4>
+            )}
             <p className={`text-sm leading-relaxed ${update.isBreaking ? 'font-bold text-bbc-red' : 'text-gray-700'}`}>
               {update.content}
             </p>
-            {update.videoUrl && (
-              <div className="mt-3 aspect-video overflow-hidden bg-black rounded">
-                <video 
-                  src={update.videoUrl} 
-                  controls 
-                  className="w-full h-full object-contain"
-                  preload="metadata"
-                />
-              </div>
-            )}
+            <div className="mt-3 space-y-2">
+              {update.imageUrls?.map((url, i) => (
+                <div key={i} className="aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200">
+                  <img 
+                    src={url} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              ))}
+              {update.videoUrls?.map((url, i) => (
+                <div key={i} className="aspect-video overflow-hidden bg-black rounded">
+                  <video 
+                    src={url} 
+                    controls 
+                    className="w-full h-full object-contain"
+                    preload="metadata"
+                  />
+                </div>
+              ))}
+            </div>
           </motion.div>
         ))}
         

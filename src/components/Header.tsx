@@ -3,7 +3,7 @@ import { auth, signIn, signInPopup, logOut } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
 import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
-import { useLanguage, languages } from '../contexts/LanguageContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -11,7 +11,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
-  const { currentLanguage, setLanguage, t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useUserPreferences();
 
   useEffect(() => {
@@ -40,26 +40,6 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
 
   return (
     <header className="border-b border-gray-200 sticky top-0 bg-white z-50">
-      {/* Top Language Bar */}
-      <div className="bg-bbc-dark text-white py-1.5 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest overflow-x-auto no-scrollbar pr-4">
-            {languages.map((lang) => (
-              <button 
-                key={lang.code}
-                onClick={() => setLanguage(lang.code)}
-                className={`transition-colors whitespace-nowrap ${currentLanguage.code === lang.code ? 'text-bbc-red' : 'hover:text-bbc-red'}`}
-              >
-                {lang.nativeName}
-              </button>
-            ))}
-          </div>
-          <div className="hidden sm:block text-[10px] font-bold uppercase tracking-widest text-gray-400">
-            {new Date().toLocaleDateString(currentLanguage.code, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center gap-8">
@@ -164,15 +144,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            ) : (
-              <button 
-                onClick={signIn}
-                className="p-2 hover:bg-gray-100 rounded-full text-gray-400 hover:text-bbc-red transition-colors"
-                title={t('Sign In')}
-              >
-                <LogOut className="w-5 h-5 rotate-180" />
-              </button>
-            )}
+            ) : null}
           </div>
         </div>
       </div>

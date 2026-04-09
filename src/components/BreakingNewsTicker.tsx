@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, Languages } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { translateUpdate } from '../services/translationService';
 
 interface LiveUpdate {
   id: string;
@@ -16,10 +15,8 @@ interface LiveUpdate {
 
 export default function BreakingNewsTicker() {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
-  const [translatedUpdates, setTranslatedUpdates] = useState<LiveUpdate[]>([]);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { currentLanguage, t } = useLanguage();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const q = query(
@@ -41,35 +38,7 @@ export default function BreakingNewsTicker() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const translateTicker = async () => {
-      if (updates.length === 0) return;
-      
-      if (currentLanguage.code === 'en') {
-        setTranslatedUpdates(updates);
-        return;
-      }
-
-      setIsTranslating(true);
-      try {
-        // Translate sequentially to avoid rate limits
-        const translated = [];
-        for (const update of updates) {
-          translated.push(await translateUpdate(update, currentLanguage.name));
-        }
-        setTranslatedUpdates(translated);
-      } catch (error) {
-        console.error("Ticker translation error:", error);
-        setTranslatedUpdates(updates);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-
-    translateTicker();
-  }, [updates, currentLanguage.code]);
-
-  const displayUpdates = translatedUpdates.length > 0 ? translatedUpdates : updates;
+  const displayUpdates = updates;
 
   useEffect(() => {
     if (displayUpdates.length > 1) {
@@ -101,11 +70,6 @@ export default function BreakingNewsTicker() {
             </motion.div>
           </AnimatePresence>
         </div>
-        {isTranslating && (
-          <div className="flex items-center gap-1 text-white/60 text-[10px] font-bold uppercase tracking-widest animate-pulse">
-            <Languages className="w-3 h-3" /> {t('Translating...')}
-          </div>
-        )}
       </div>
     </div>
   );

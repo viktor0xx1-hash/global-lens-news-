@@ -3,7 +3,6 @@ import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2 } from 'lucide-react';
-import { languages } from '../contexts/LanguageContext';
 
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
@@ -19,38 +18,49 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     content: '',
     author: '',
     category: 'Geopolitics',
-    imageUrl: '',
-    videoUrl: '',
-    isBreaking: false,
-    language: 'en'
+    imageUrls: [] as string[],
+    videoUrls: [] as string[],
+    isBreaking: false
   });
 
   // Update Form
   const [update, setUpdate] = useState({
+    title: '',
     content: '',
-    videoUrl: '',
-    isBreaking: false,
-    language: 'en'
+    videoUrls: [] as string[],
+    imageUrls: [] as string[],
+    isBreaking: false
   });
 
-  const handleFileUpload = async (file: File, type: 'image' | 'video') => {
+  const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
     setUploading(true);
     try {
       const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
       const snapshot = await uploadBytes(storageRef, file);
       const url = await getDownloadURL(snapshot.ref);
       
-      if (activeTab === 'article') {
-        if (type === 'image') setArticle(prev => ({ ...prev, imageUrl: url }));
-        else setArticle(prev => ({ ...prev, videoUrl: url }));
+      if (target === 'article') {
+        if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+        else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
       } else {
-        setUpdate(prev => ({ ...prev, videoUrl: url }));
+        if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+        else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
       }
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload file. Please try again.");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const removeFile = (url: string, type: 'image' | 'video', target: 'article' | 'update') => {
+    if (target === 'article') {
+      if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
+      else setArticle(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
+    } else {
+      if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
+      else setUpdate(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
     }
   };
 
@@ -79,7 +89,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         ...update,
         timestamp: serverTimestamp()
       });
-      setUpdate({ content: '', videoUrl: '', isBreaking: false, language: 'en' });
+      setUpdate({ title: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
       alert('Live update posted!');
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'live-updates');
@@ -157,54 +167,77 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   <option>Diplomacy</option>
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-gray-400">Main Image</label>
-                  <div className="flex gap-2">
-                    <input 
-                      placeholder="Image URL"
-                      className="flex-1 p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none text-sm"
-                      value={article.imageUrl}
-                      onChange={e => setArticle({...article, imageUrl: e.target.value})}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-3 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                    >
-                      <ImageIcon className="w-5 h-5 text-gray-600" />
-                    </button>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-gray-400">Images</label>
+                    <div className="flex flex-wrap gap-2">
+                      {article.imageUrls.map(url => (
+                        <div key={url} className="relative w-20 h-20 group">
+                          <img src={url} className="w-full h-full object-cover rounded border border-gray-200" referrerPolicy="no-referrer" />
+                          <button 
+                            type="button"
+                            onClick={() => removeFile(url, 'image', 'article')}
+                            className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.multiple = true;
+                          input.onchange = (e: any) => {
+                            const files = Array.from(e.target.files as FileList);
+                            files.forEach(file => handleFileUpload(file, 'image', 'article'));
+                          };
+                          input.click();
+                        }}
+                        className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
+                      >
+                        <ImageIcon className="w-6 h-6 text-gray-300" />
+                      </button>
+                    </div>
                   </div>
-                  <input 
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/*"
-                    onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'image')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase text-gray-400">Main Video</label>
-                  <div className="flex gap-2">
-                    <input 
-                      placeholder="Video URL"
-                      className="flex-1 p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none text-sm"
-                      value={article.videoUrl}
-                      onChange={e => setArticle({...article, videoUrl: e.target.value})}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = 'video/*';
-                        input.onchange = (e: any) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'video');
-                        input.click();
-                      }}
-                      className="p-3 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                    >
-                      <VideoIcon className="w-5 h-5 text-gray-600" />
-                    </button>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase text-gray-400">Videos</label>
+                    <div className="flex flex-wrap gap-2">
+                      {article.videoUrls.map(url => (
+                        <div key={url} className="relative w-20 h-20 group">
+                          <div className="w-full h-full bg-black rounded flex items-center justify-center">
+                            <VideoIcon className="w-6 h-6 text-white" />
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => removeFile(url, 'video', 'article')}
+                            className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'video/*';
+                          input.multiple = true;
+                          input.onchange = (e: any) => {
+                            const files = Array.from(e.target.files as FileList);
+                            files.forEach(file => handleFileUpload(file, 'video', 'article'));
+                          };
+                          input.click();
+                        }}
+                        className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
+                      >
+                        <VideoIcon className="w-6 h-6 text-gray-300" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -231,37 +264,70 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
             </form>
           ) : (
             <form onSubmit={handlePostUpdate} className="space-y-4">
+              <input 
+                required
+                placeholder="Update Headline"
+                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none font-serif text-lg font-bold"
+                value={update.title}
+                onChange={e => setUpdate({...update, title: e.target.value})}
+              />
               <textarea 
                 required
-                placeholder="Short update text..."
-                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-32"
+                placeholder="Full update content..."
+                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-48"
                 value={update.content}
                 onChange={e => setUpdate({...update, content: e.target.value})}
               />
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-gray-400">Attach Video</label>
-                <div className="flex gap-2">
-                  <input 
-                    placeholder="Video URL"
-                    className="flex-1 p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none text-sm"
-                    value={update.videoUrl}
-                    onChange={e => setUpdate({...update, videoUrl: e.target.value})}
-                  />
+                <label className="text-xs font-bold uppercase text-gray-400">Media Attachments</label>
+                <div className="flex flex-wrap gap-2">
+                  {update.imageUrls.map(url => (
+                    <div key={url} className="relative w-16 h-16 group">
+                      <img src={url} className="w-full h-full object-cover rounded border border-gray-200" referrerPolicy="no-referrer" />
+                      <button 
+                        type="button"
+                        onClick={() => removeFile(url, 'image', 'update')}
+                        className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {update.videoUrls.map(url => (
+                    <div key={url} className="relative w-16 h-16 group">
+                      <div className="w-full h-full bg-black rounded flex items-center justify-center">
+                        <VideoIcon className="w-4 h-4 text-white" />
+                      </div>
+                      <button 
+                        type="button"
+                        onClick={() => removeFile(url, 'video', 'update')}
+                        className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
                   <button 
                     type="button"
-                    onClick={() => updateVideoInputRef.current?.click()}
-                    className="p-3 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*,video/*';
+                      input.multiple = true;
+                      input.onchange = (e: any) => {
+                        const files = Array.from(e.target.files as FileList);
+                        files.forEach(file => {
+                          const type = file.type.startsWith('image/') ? 'image' : 'video';
+                          handleFileUpload(file, type, 'update');
+                        });
+                      };
+                      input.click();
+                    }}
+                    className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
                   >
-                    <VideoIcon className="w-5 h-5 text-gray-600" />
+                    <ImageIcon className="w-5 h-5 text-gray-300" />
                   </button>
                 </div>
-                <input 
-                  type="file"
-                  ref={updateVideoInputRef}
-                  className="hidden"
-                  accept="video/*"
-                  onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'video')}
-                />
               </div>
               {uploading && (
                 <div className="flex items-center gap-2 text-bbc-red text-xs font-bold animate-pulse">
