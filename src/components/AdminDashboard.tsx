@@ -7,8 +7,9 @@ import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as Video
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [pendingFiles, setPendingFiles] = useState<{ name: string, type: 'image' | 'video' }[]>([]);
+  const uploading = pendingFiles.length > 0;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateVideoInputRef = useRef<HTMLInputElement>(null);
 
@@ -42,8 +43,8 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    setUploading(true);
     setUploadProgress(0);
+    setPendingFiles(prev => [...prev, { name: file.name, type }]);
     
     try {
       const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
@@ -58,7 +59,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
           (error) => {
             console.error("Upload error:", error);
             alert("Failed to upload file. Please try again.");
-            setUploading(false);
+            setPendingFiles(prev => prev.filter(f => f.name !== file.name));
             reject(error);
           }, 
           async () => {
@@ -70,15 +71,14 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
               if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
               else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
             }
-            setUploading(false);
             setUploadProgress(0);
+            setPendingFiles(prev => prev.filter(f => f.name !== file.name));
             resolve(url);
           }
         );
       });
     } catch (error) {
       console.error("Upload error:", error);
-      setUploading(false);
     }
   };
 
@@ -222,6 +222,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           input.onchange = (e: any) => {
                             const files = Array.from(e.target.files as FileList);
                             files.forEach(file => handleFileUpload(file, 'image', 'article'));
+                            e.target.value = ''; // Reset
                           };
                           input.click();
                         }}
@@ -229,6 +230,11 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       >
                         <ImageIcon className="w-6 h-6 text-gray-300" />
                       </button>
+                      {pendingFiles.filter(f => f.type === 'image').map((f, i) => (
+                        <div key={i} className="w-20 h-20 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
+                          <Loader2 className="w-6 h-6 text-bbc-red animate-spin" />
+                        </div>
+                      ))}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -258,6 +264,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           input.onchange = (e: any) => {
                             const files = Array.from(e.target.files as FileList);
                             files.forEach(file => handleFileUpload(file, 'video', 'article'));
+                            e.target.value = ''; // Reset
                           };
                           input.click();
                         }}
@@ -265,6 +272,11 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       >
                         <VideoIcon className="w-6 h-6 text-gray-300" />
                       </button>
+                      {pendingFiles.filter(f => f.type === 'video').map((f, i) => (
+                        <div key={i} className="w-20 h-20 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
+                          <Loader2 className="w-6 h-6 text-bbc-red animate-spin" />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -295,10 +307,10 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold uppercase text-bbc-red">Mark as Breaking News</span>
               </label>
               <button 
-                disabled={loading}
+                disabled={loading || uploading}
                 className="w-full bg-bbc-red text-white py-4 font-bold uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send className="w-5 h-5" /> {loading ? 'Publishing...' : 'Publish Article'}
+                <Send className="w-5 h-5" /> {loading ? 'Publishing...' : uploading ? 'Uploading Media...' : 'Publish Article'}
               </button>
             </form>
           ) : (
@@ -366,6 +378,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           const type = file.type.startsWith('image/') ? 'image' : 'video';
                           handleFileUpload(file, type, 'update');
                         });
+                        e.target.value = ''; // Reset
                       };
                       input.click();
                     }}
@@ -373,6 +386,11 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   >
                     <ImageIcon className="w-5 h-5 text-gray-300" />
                   </button>
+                  {pendingFiles.map((f, i) => (
+                    <div key={i} className="w-16 h-16 border border-gray-100 rounded flex items-center justify-center bg-gray-50 animate-pulse">
+                      <Loader2 className="w-5 h-5 text-bbc-red animate-spin" />
+                    </div>
+                  ))}
                 </div>
               </div>
               {uploading && (
@@ -401,10 +419,10 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 <span className="text-sm font-bold uppercase text-bbc-red">Major Breaking Update</span>
               </label>
               <button 
-                disabled={loading}
+                disabled={loading || uploading}
                 className="w-full bg-bbc-dark text-white py-4 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Send className="w-5 h-5" /> {loading ? 'Posting...' : 'Post Update'}
+                <Send className="w-5 h-5" /> {loading ? 'Posting...' : uploading ? 'Uploading Media...' : 'Post Update'}
               </button>
             </form>
           )}
