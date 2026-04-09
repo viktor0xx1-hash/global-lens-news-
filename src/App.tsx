@@ -3,14 +3,14 @@ import Header from './components/Header';
 import BreakingNewsTicker from './components/BreakingNewsTicker';
 import NewsFeed from './components/NewsFeed';
 import LiveUpdateFeed from './components/LiveUpdateFeed';
-import ArticleView from './components/ArticleView';
-import PolicyView from './components/PolicyView';
-import BookmarksView from './components/BookmarksView';
 import Footer from './components/Footer';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const ArticleView = lazy(() => import('./components/ArticleView'));
+const PolicyView = lazy(() => import('./components/PolicyView'));
+const BookmarksView = lazy(() => import('./components/BookmarksView'));
 
 export default function App() {
   const [showAdmin, setShowAdmin] = useState(false);
@@ -42,21 +42,20 @@ export default function App() {
 
       <Suspense fallback={null}>
         {showAdmin && <AdminDashboard onClose={() => setShowAdmin(false)} />}
+        <AnimatePresence>
+          {showBookmarks && (
+            <BookmarksView 
+              onClose={() => setShowBookmarks(false)} 
+              onArticleClick={(article) => {
+                setSelectedArticle(article);
+                setShowBookmarks(false);
+              }} 
+            />
+          )}
+        </AnimatePresence>
+        {selectedArticle && <ArticleView article={selectedArticle} onClose={() => setSelectedArticle(null)} />}
+        {selectedPolicy && <PolicyView title={selectedPolicy.title} content={selectedPolicy.content} onClose={() => setSelectedPolicy(null)} />}
       </Suspense>
-
-      <AnimatePresence>
-        {showBookmarks && (
-          <BookmarksView 
-            onClose={() => setShowBookmarks(false)} 
-            onArticleClick={(article) => {
-              setSelectedArticle(article);
-              setShowBookmarks(false);
-            }} 
-          />
-        )}
-      </AnimatePresence>
-      {selectedArticle && <ArticleView article={selectedArticle} onClose={() => setSelectedArticle(null)} />}
-      {selectedPolicy && <PolicyView title={selectedPolicy.title} content={selectedPolicy.content} onClose={() => setSelectedPolicy(null)} />}
     </div>
     </UserPreferencesProvider>
   );
