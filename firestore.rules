@@ -41,17 +41,10 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // Check for explicit email first as it doesn't require a document lookup
-      let isExplicitAdmin = isAuthenticated() && 
-                            request.auth.token.email.lower() == "viktor0xx1@gmail.com" && 
-                            request.auth.token.email_verified == true;
-      
-      // Then check for role in users collection if document exists
-      let hasAdminRole = isAuthenticated() && 
-                         exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-                         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-                         
-      return isExplicitAdmin || hasAdminRole;
+      return isAuthenticated() && 
+             (request.auth.token.email.toLower() == "viktor0xx1@gmail.com" || 
+              (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
     function isValidArticle(data) {
