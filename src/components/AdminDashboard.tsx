@@ -2,14 +2,22 @@ import { useState, useRef } from 'react';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2 } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, Brain, Sparkles, Copy, Check } from 'lucide-react';
+import { GoogleGenAI, Type } from "@google/genai";
 
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
-  const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
+  const [activeTab, setActiveTab] = useState<'article' | 'update' | 'ailab'>('article');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateVideoInputRef = useRef<HTMLInputElement>(null);
+
+  // AI Lab State
+  const [aiInput, setAiInput] = useState('');
+  const [aiMindset, setAiMindset] = useState('');
+  const [aiResult, setAiResult] = useState<{ headline: string; summary: string; content: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
   // Article Form
   const [article, setArticle] = useState({
@@ -98,6 +106,57 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleGenerateAI = async () => {
+    if (!aiInput.trim()) return;
+    setAiLoading(true);
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Raw Facts/Notes: ${aiInput}\n\nMindset/Angle: ${aiMindset}`,
+        config: {
+          systemInstruction: `You are the Lead Editorial Assistant for 'Global Lens', a world-class geopolitical news platform. Your mission is to counter mainstream media propaganda and disinformation by providing deep, critical analysis that makes readers think for themselves. 
+Style Guidelines:
+- Use simple, direct, and punchy grammar (avoid complex 'AI-speak').
+- Packaging must be world-class (like BBC or better).
+- Focus on logic, evidence, and uncovering hidden motives (e.g., economic or geopolitical interests).
+- Keep readers glued to their screen with compelling narratives.
+- Output must be in JSON format with the following fields: 'headline', 'summary', 'content'.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              headline: { type: Type.STRING },
+              summary: { type: Type.STRING },
+              content: { type: Type.STRING }
+            },
+            required: ["headline", "summary", "content"]
+          }
+        }
+      });
+
+      const result = JSON.parse(response.text);
+      setAiResult(result);
+    } catch (error) {
+      console.error("AI Generation error:", error);
+      alert("Failed to generate content. Please check your connection or try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const applyToEditor = () => {
+    if (!aiResult) return;
+    setArticle(prev => ({
+      ...prev,
+      title: aiResult.headline,
+      summary: aiResult.summary,
+      content: aiResult.content
+    }));
+    setActiveTab('article');
+    alert('Content applied to Article Editor!');
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -123,10 +182,102 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
           >
             <Zap className="w-4 h-4" /> Live Update
           </button>
+          <button 
+            onClick={() => setActiveTab('ailab')}
+            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'ailab' ? 'text-bbc-red border-b-2 border-bbc-red' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <Brain className="w-4 h-4" /> AI Lab
+          </button>
         </div>
 
         <div className="p-6 overflow-y-auto">
-          {activeTab === 'article' ? (
+          {activeTab === 'ailab' ? (
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 flex gap-3">
+                <Sparkles className="w-5 h-5 text-blue-500 shrink-0" />
+                <p className="text-sm text-blue-800">
+                  Welcome to the <strong>Global Lens AI Lab</strong>. Use this space to refine your vision and counter propaganda.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold uppercase text-gray-400 mb-1 block">Raw Facts / Notes</label>
+                  <textarea 
+                    placeholder="Paste your raw info, bullet points, or news source here..."
+                    className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-32 text-sm"
+                    value={aiInput}
+                    onChange={e => setAiInput(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase text-gray-400 mb-1 block">Mindset / Angle</label>
+                  <input 
+                    placeholder="e.g. Counter the narrative of X, focus on economic motives..."
+                    className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none text-sm"
+                    value={aiMindset}
+                    onChange={e => setAiMindset(e.target.value)}
+                  />
+                </div>
+
+                <button 
+                  onClick={handleGenerateAI}
+                  disabled={aiLoading || !aiInput}
+                  className="w-full bg-bbc-dark text-white py-3 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {aiLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                  {aiLoading ? 'Analyzing & Writing...' : 'Generate World-Class Content'}
+                </button>
+              </div>
+
+              {aiResult && (
+                <div className="space-y-4 border-t border-gray-100 pt-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold uppercase text-bbc-red text-sm">Generated Draft</h3>
+                    <button 
+                      onClick={applyToEditor}
+                      className="text-xs bg-green-600 text-white px-3 py-1 rounded font-bold hover:bg-green-700 transition-colors"
+                    >
+                      Apply to Editor
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 bg-gray-50 p-4 rounded border border-gray-100">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-gray-400 block">Headline</label>
+                      <div className="flex justify-between gap-2">
+                        <p className="font-serif font-bold text-lg">{aiResult.headline}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(aiResult.headline); setCopied('h'); setTimeout(() => setCopied(null), 2000); }}>
+                          {copied === 'h' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-gray-400 block">Summary</label>
+                      <div className="flex justify-between gap-2">
+                        <p className="text-sm italic text-gray-600">{aiResult.summary}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(aiResult.summary); setCopied('s'); setTimeout(() => setCopied(null), 2000); }}>
+                          {copied === 's' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-gray-400 block">Content</label>
+                      <div className="flex justify-between gap-2">
+                        <p className="text-sm whitespace-pre-wrap">{aiResult.content}</p>
+                        <button onClick={() => { navigator.clipboard.writeText(aiResult.content); setCopied('c'); setTimeout(() => setCopied(null), 2000); }}>
+                          {copied === 'c' ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-gray-400" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : activeTab === 'article' ? (
             <form onSubmit={handlePostArticle} className="space-y-4">
               <input 
                 required
