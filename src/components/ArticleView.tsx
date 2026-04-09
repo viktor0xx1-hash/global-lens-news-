@@ -3,6 +3,7 @@ import Markdown from 'react-markdown';
 import { X, Clock, User, Tag, Share2, Bookmark } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import SupportCard from './SupportCard';
+import { formatDate } from '../lib/utils';
 
 interface Article {
   id: string;
@@ -142,7 +143,7 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium uppercase tracking-wider border-y border-gray-100 py-6">
             <span className="flex items-center gap-2"><User className="w-4 h-4" /> By {displayArticle.author}</span>
-            <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(displayArticle.publishedAt?.toDate()).toLocaleString()}</span>
+            <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {formatDate(displayArticle.publishedAt, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </header>
 

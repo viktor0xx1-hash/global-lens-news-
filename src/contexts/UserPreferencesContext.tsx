@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { toDate } from '../lib/utils';
 
 interface Notification {
   id: string;
@@ -64,7 +65,8 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
         if (change.type === 'added') {
           const data = change.doc.data();
           // Only notify if it's not the initial load (approximate check)
-          if (Date.now() - data.publishedAt?.toMillis() < 60000) {
+          const publishedAt = toDate(data.publishedAt);
+          if (Date.now() - publishedAt.getTime() < 60000) {
             addNotification({
               id: change.doc.id,
               title: 'New Article',
@@ -84,7 +86,8 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
       snapshot.docChanges().forEach((change) => {
         if (change.type === 'added') {
           const data = change.doc.data();
-          if (Date.now() - data.timestamp?.toMillis() < 60000) {
+          const timestamp = toDate(data.timestamp);
+          if (Date.now() - timestamp.getTime() < 60000) {
             addNotification({
               id: change.doc.id,
               title: 'Live Update',

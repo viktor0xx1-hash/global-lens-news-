@@ -5,6 +5,7 @@ import Logo from './Logo';
 import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
+import { formatTime } from '../lib/utils';
 
 export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClick: () => void, onBookmarksClick: () => void }) {
   const [user, setUser] = useState<User | null>(null);
@@ -102,7 +103,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                             {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-bbc-red" />}
                             <div className="flex justify-between items-start mb-1">
                               <span className="text-[10px] font-bold uppercase tracking-widest text-bbc-red">{notif.title}</span>
-                              <span className="text-[8px] text-gray-400 uppercase font-bold">{new Date(notif.timestamp?.toMillis ? notif.timestamp.toMillis() : notif.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span className="text-[8px] text-gray-400 uppercase font-bold">{formatTime(notif.timestamp)}</span>
                             </div>
                             <p className="text-xs font-medium text-gray-700 line-clamp-2">{notif.message}</p>
                           </div>

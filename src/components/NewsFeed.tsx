@@ -4,6 +4,7 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { Clock, User, Tag, Bookmark } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
+import { formatDate } from '../lib/utils';
 
 interface Article {
   id: string;
@@ -90,7 +91,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
           </p>
           <div className="flex items-center gap-6 text-sm text-gray-500 font-medium uppercase tracking-wider">
             <span className="flex items-center gap-2"><User className="w-4 h-4" /> {mainArticle.author}</span>
-            <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {new Date(mainArticle.publishedAt?.toDate()).toLocaleDateString()}</span>
+            <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {formatDate(mainArticle.publishedAt)}</span>
             <span className="flex items-center gap-2 text-bbc-red"><Tag className="w-4 h-4" /> {mainArticle.category}</span>
             <button 
               onClick={(e) => {

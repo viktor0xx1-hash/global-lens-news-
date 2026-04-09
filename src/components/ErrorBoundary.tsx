@@ -38,17 +38,15 @@ export default class ErrorBoundary extends Component<Props, State> {
             </p>
             <button 
               onClick={() => window.location.reload()}
-              className="w-full bg-bbc-dark text-white py-3 rounded font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2"
+              className="w-full bg-bbc-dark text-white py-3 rounded font-bold uppercase tracking-widest hover:bg-black transition-all flex items-center justify-center gap-2 mb-4"
             >
               <RefreshCw className="w-4 h-4" /> Reconnect Now
             </button>
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-8 p-4 bg-gray-100 rounded text-left overflow-auto max-h-40">
-                <p className="text-[10px] font-mono text-gray-500 break-all">
-                  {this.state.error?.message}
-                </p>
-              </div>
-            )}
+            <div className="p-4 bg-gray-50 rounded text-left overflow-auto max-h-40 border border-gray-100">
+              <p className="text-[10px] font-mono text-gray-400 break-all">
+                Error Code: {this.state.error?.message || 'Unknown Connection Error'}
+              </p>
+            </div>
           </div>
         </div>
       );

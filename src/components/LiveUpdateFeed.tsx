@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
+import { formatTime } from '../lib/utils';
 
 interface LiveUpdate {
   id: string;
@@ -55,7 +56,7 @@ export default function LiveUpdateFeed() {
           >
             <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${update.isBreaking ? 'bg-bbc-red' : 'bg-bbc-dark'}`} />
             <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">
-              {new Date(update.timestamp?.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} GMT
+              {formatTime(update.timestamp)} GMT
             </div>
             {update.title && (
               <h4 className={`text-sm font-bold mb-1 ${update.isBreaking ? 'text-bbc-red' : 'text-bbc-dark'}`}>
