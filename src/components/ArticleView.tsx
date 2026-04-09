@@ -31,63 +31,6 @@ export default function ArticleView({ article, onClose }: { article: Article, on
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
-  const renderMedia = () => {
-    const videos = displayArticle.videoUrls || (displayArticle.videoUrl ? [displayArticle.videoUrl] : []);
-    const images = displayArticle.imageUrls || (displayArticle.imageUrl ? [displayArticle.imageUrl] : []);
-
-    return (
-      <div className="space-y-8 mb-12">
-        {videos.map((url, i) => {
-          const youtubeId = getYouTubeId(url);
-          if (youtubeId) {
-            return (
-              <div key={`v-${i}`} className="aspect-video overflow-hidden bg-black">
-                <iframe
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${youtubeId}`}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            );
-          }
-          return (
-            <div key={`v-${i}`} className="aspect-video overflow-hidden bg-black">
-              <video 
-                src={url} 
-                controls 
-                className="w-full h-full object-contain"
-                preload="metadata"
-              />
-            </div>
-          );
-        })}
-        {images.map((url, i) => (
-          <div key={`i-${i}`} className="aspect-video overflow-hidden bg-gray-100">
-            <img 
-              src={url} 
-              alt={`${displayArticle.title} - ${i + 1}`}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        ))}
-        {videos.length === 0 && images.length === 0 && (
-          <div className="aspect-video overflow-hidden bg-gray-100">
-            <img 
-              src={`https://picsum.photos/seed/${displayArticle.id}/1200/675`} 
-              alt={displayArticle.title}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -136,7 +79,7 @@ export default function ArticleView({ article, onClose }: { article: Article, on
       </div>
 
       <article className="max-w-4xl mx-auto px-4 py-12">
-        <header className="mb-12">
+        <header className="mb-8">
           <h1 className="text-4xl md:text-6xl font-serif font-bold mb-8 leading-tight">
             {displayArticle.title}
           </h1>
@@ -147,10 +90,110 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           </div>
         </header>
 
-        {renderMedia()}
+        {/* Feature Image */}
+        {(displayArticle.imageUrls?.[0] || displayArticle.imageUrl) && (
+          <div className="aspect-video overflow-hidden bg-gray-100 mb-8">
+            <img 
+              src={displayArticle.imageUrls?.[0] || displayArticle.imageUrl} 
+              alt={displayArticle.title}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
+
+        {/* Summary Section */}
+        <div className="mb-12 pb-8 border-b border-gray-100">
+          <p className="text-2xl font-serif text-gray-600 leading-relaxed italic">
+            {displayArticle.summary}
+          </p>
+        </div>
 
         <div className="markdown-body prose prose-lg max-w-none">
-          <Markdown>{displayArticle.content}</Markdown>
+          {(() => {
+            const paragraphs = displayArticle.content.split('\n\n').filter(p => p.trim() !== '');
+            const images = displayArticle.imageUrls || (displayArticle.imageUrl ? [displayArticle.imageUrl] : []);
+            const videos = displayArticle.videoUrls || (displayArticle.videoUrl ? [displayArticle.videoUrl] : []);
+            
+            // Image 1 is used as Feature Image above
+            const remainingImages = images.slice(1);
+            let currentImageIdx = 0;
+
+            return (
+              <>
+                {paragraphs.map((para, idx) => (
+                  <div key={idx}>
+                    <Markdown>{para}</Markdown>
+                    
+                    {/* Place Image 2 after Paragraph 1 */}
+                    {idx === 0 && remainingImages[currentImageIdx] && (
+                      <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
+                        <img 
+                          src={remainingImages[currentImageIdx++]} 
+                          alt={`Detail ${currentImageIdx}`}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+
+                    {/* Place Image 3 after Paragraph 2 */}
+                    {idx === 1 && remainingImages[currentImageIdx] && (
+                      <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
+                        <img 
+                          src={remainingImages[currentImageIdx++]} 
+                          alt={`Detail ${currentImageIdx}`}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Remaining Media at the bottom */}
+                {(remainingImages.slice(currentImageIdx).length > 0 || videos.length > 0) && (
+                  <div className="mt-16 space-y-8 pt-12 border-t border-gray-100">
+                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-8">Additional Media</h4>
+                    {videos.map((url, i) => {
+                      const youtubeId = getYouTubeId(url);
+                      return (
+                        <div key={`v-${i}`} className="aspect-video overflow-hidden bg-black shadow-xl rounded-sm">
+                          {youtubeId ? (
+                            <iframe
+                              className="w-full h-full"
+                              src={`https://www.youtube.com/embed/${youtubeId}`}
+                              title="YouTube video player"
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            ></iframe>
+                          ) : (
+                            <video 
+                              src={url} 
+                              controls 
+                              className="w-full h-full object-contain"
+                              preload="metadata"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                    {remainingImages.slice(currentImageIdx).map((url, i) => (
+                      <div key={`ri-${i}`} className="aspect-video overflow-hidden bg-gray-100 shadow-md rounded-sm">
+                        <img 
+                          src={url} 
+                          alt="Additional coverage"
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         <SupportCard variant="article" />

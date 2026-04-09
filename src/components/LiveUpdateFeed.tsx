@@ -63,31 +63,102 @@ export default function LiveUpdateFeed() {
                 {update.title}
               </h4>
             )}
-            <p className={`text-sm leading-relaxed ${update.isBreaking ? 'font-bold text-bbc-red' : 'text-gray-700'}`}>
-              {update.content}
-            </p>
-            <div className="mt-3 space-y-2">
-              {update.imageUrls?.map((url, i) => (
-                <div key={i} className="aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200">
-                  <img 
-                    src={url} 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-              {update.videoUrls?.map((url, i) => (
-                <div key={i} className="aspect-video overflow-hidden bg-black rounded">
-                  <video 
-                    src={url} 
-                    controls 
-                    className="w-full h-full object-contain"
-                    preload="metadata"
-                  />
-                </div>
-              ))}
+            <div className={`text-sm leading-relaxed ${update.isBreaking ? 'font-bold text-bbc-red' : 'text-gray-700'}`}>
+              {(() => {
+                const paragraphs = update.content.split('\n\n').filter(p => p.trim() !== '');
+                const images = update.imageUrls || [];
+                const videos = update.videoUrls || [];
+                let currentImgIdx = 0;
+
+                if (paragraphs.length > 0) {
+                  return (
+                    <>
+                      {paragraphs.map((para, idx) => (
+                        <div key={idx} className={idx > 0 ? 'mt-4' : ''}>
+                          <p>{para}</p>
+                          
+                          {/* Image after Para 1 */}
+                          {idx === 0 && images[currentImgIdx] && (
+                            <div className="my-4 aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200 shadow-sm">
+                              <img 
+                                src={images[currentImgIdx++]} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+
+                          {/* Image after Para 2 */}
+                          {idx === 1 && images[currentImgIdx] && (
+                            <div className="my-4 aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200 shadow-sm">
+                              <img 
+                                src={images[currentImgIdx++]} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Remaining Media */}
+                      {(images.slice(currentImgIdx).length > 0 || videos.length > 0) && (
+                        <div className="mt-4 space-y-2">
+                          {images.slice(currentImgIdx).map((url, i) => (
+                            <div key={`rem-i-${i}`} className="aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200 shadow-sm">
+                              <img 
+                                src={url} 
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                                loading="lazy"
+                              />
+                            </div>
+                          ))}
+                          {videos.map((url, i) => (
+                            <div key={`rem-v-${i}`} className="aspect-video overflow-hidden bg-black rounded shadow-sm">
+                              <video 
+                                src={url} 
+                                controls 
+                                className="w-full h-full object-contain"
+                                preload="metadata"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                }
+                return update.content;
+              })()}
             </div>
+            {/* Fallback for empty content but has media */}
+            {update.content.trim() === '' && (
+              <div className="mt-3 space-y-2">
+                {update.imageUrls?.map((url, i) => (
+                  <div key={i} className="aspect-video overflow-hidden bg-gray-100 rounded border border-gray-200 shadow-sm">
+                    <img 
+                      src={url} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+                {update.videoUrls?.map((url, i) => (
+                  <div key={i} className="aspect-video overflow-hidden bg-black rounded shadow-sm">
+                    <video 
+                      src={url} 
+                      controls 
+                      className="w-full h-full object-contain"
+                      preload="metadata"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         ))}
         
