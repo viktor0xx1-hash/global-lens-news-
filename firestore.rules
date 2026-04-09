@@ -42,44 +42,18 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-             (request.auth.token.email.toLower() == "viktor0xx1@gmail.com" || 
-              (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
-    }
-
-    function isValidArticle(data) {
-      return data.title is string && data.title.size() > 0 && data.title.size() < 500 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 100000 &&
-             data.publishedAt is timestamp &&
-             (!('imageUrls' in data) || data.imageUrls is list) &&
-             (!('videoUrls' in data) || data.videoUrls is list) &&
-             (!('isBreaking' in data) || data.isBreaking is bool) &&
-             (!('author' in data) || data.author is string) &&
-             (!('category' in data) || data.category is string) &&
-             (!('summary' in data) || data.summary is string);
-    }
-
-    function isValidLiveUpdate(data) {
-      return data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
-             data.timestamp is timestamp &&
-             (!('title' in data) || data.title is string) &&
-             (!('summary' in data) || data.summary is string) &&
-             (!('imageUrls' in data) || data.imageUrls is list) &&
-             (!('videoUrls' in data) || data.videoUrls is list) &&
-             (!('isBreaking' in data) || data.isBreaking is bool);
+             request.auth.token.get('email', '').toLower() == "viktor0xx1@gmail.com";
     }
 
     // Rules
     match /articles/{articleId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidArticle(request.resource.data);
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /live-updates/{updateId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidLiveUpdate(request.resource.data);
-      allow delete: if isAdmin();
+      allow write: if isAdmin();
     }
 
     match /users/{userId} {

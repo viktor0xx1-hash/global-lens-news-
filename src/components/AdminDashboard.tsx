@@ -8,7 +8,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v2.4-permission-fix'); 
+  const [version] = useState('v2.5-emergency-fix'); 
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
 
