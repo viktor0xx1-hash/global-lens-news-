@@ -86,7 +86,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
           <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4 group-hover:text-bbc-red transition-colors leading-tight">
             {mainArticle.title}
           </h1>
-          <p className="text-xl text-gray-600 font-serif mb-6 leading-relaxed">
+          <p className="text-xl text-gray-600 font-serif mb-6 leading-relaxed italic">
             {mainArticle.summary}
           </p>
           <div className="flex items-center gap-6 text-sm text-gray-500 font-medium uppercase tracking-wider">
@@ -176,7 +176,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
               <h4 className="font-serif font-bold text-xl mb-2 group-hover:text-bbc-red transition-colors">
                 {article.title}
               </h4>
-              <p className="text-gray-600 text-sm line-clamp-2 font-serif">
+              <p className="text-gray-600 text-sm line-clamp-2 font-serif italic">
                 {article.summary}
               </p>
             </motion.article>

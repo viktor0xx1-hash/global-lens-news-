@@ -63,6 +63,11 @@ export default function LiveUpdateFeed() {
                 {update.title}
               </h4>
             )}
+            {update.summary && (
+              <p className="text-sm font-serif italic text-gray-600 mb-3 leading-relaxed border-l-2 border-gray-200 pl-3">
+                {update.summary}
+              </p>
+            )}
             <div className={`text-sm leading-relaxed ${update.isBreaking ? 'font-bold text-bbc-red' : 'text-gray-700'}`}>
               {(() => {
                 const paragraphs = update.content.split('\n\n').filter(p => p.trim() !== '');
@@ -72,9 +77,9 @@ export default function LiveUpdateFeed() {
 
                 if (paragraphs.length > 0) {
                   return (
-                    <>
+                    <div className="space-y-4">
                       {paragraphs.map((para, idx) => (
-                        <div key={idx} className={idx > 0 ? 'mt-4' : ''}>
+                        <div key={idx}>
                           <p>{para}</p>
                           
                           {/* Image after Para 1 */}
@@ -128,7 +133,7 @@ export default function LiveUpdateFeed() {
                           ))}
                         </div>
                       )}
-                    </>
+                    </div>
                   );
                 }
                 return update.content;
