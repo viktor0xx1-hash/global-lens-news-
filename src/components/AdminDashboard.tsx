@@ -1,16 +1,18 @@
-import { useState, useRef } from 'react';
-import imageCompression from 'browser-image-compression';
+import { useState, useRef, useEffect } from 'react';
 import { db, storage, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2 } from 'lucide-react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle } from 'lucide-react';
 
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
+  const [version] = useState('v2.1-robust'); // Version tracker for user verification
   const articleImageInputRef = useRef<HTMLInputElement>(null);
   const articleVideoInputRef = useRef<HTMLInputElement>(null);
   const updateMediaInputRef = useRef<HTMLInputElement>(null);
+  const [urlInput, setUrlInput] = useState('');
+  const [urlType, setUrlType] = useState<'image' | 'video'>('image');
 
   // Article Form
   const [article, setArticle] = useState({
@@ -52,64 +54,66 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     // Add to previews immediately for instant feedback
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
 
-    // Run the upload process in the background without blocking
-    (async () => {
-      try {
-        let fileToUpload = file;
-
-        // Aggressive compression for images
-        if (type === 'image') {
-          const options = {
-            maxSizeMB: 0.8,
-            maxWidthOrHeight: 1920,
-            useWebWorker: true,
-          };
-          try {
-            fileToUpload = await imageCompression(file, options);
-          } catch (error) {
-            console.warn("Compression failed, using original", error);
-          }
-        } else {
-          const sizeLimit = 100 * 1024 * 1024; // 100MB
-          if (file.size > sizeLimit) {
-            alert("Video is too large (Max 100MB)");
-            setPreviews(prev => prev.filter(p => p.id !== id));
-            URL.revokeObjectURL(localUrl);
-            return;
-          }
-        }
-
-        const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
-
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setPreviews(prev => prev.map(p => p.id === id ? { ...p, progress: Math.round(progress) } : p));
-          }, 
-          (error) => {
-            console.error("Upload error:", error);
-            setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
-          }, 
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            
-            if (target === 'article') {
-              if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-              else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-            } else {
-              if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
-              else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
-            }
-
-            setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url } : p));
-          }
-        );
-      } catch (error) {
-        console.error("Process error:", error);
-        setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
+    try {
+      // SIMPLE UPLOAD - No compression, no resumable task to avoid mobile hangs
+      const storageRef = ref(storage, `uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      
+      // We use a simple promise-based upload
+      const result = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(result.ref);
+      
+      // Update the actual form state
+      if (target === 'article') {
+        if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+        else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
+      } else {
+        if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
+        else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
       }
-    })();
+
+      // Mark preview as done
+      setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url, progress: 100 } : p));
+    } catch (error: any) {
+      console.error("Upload failed for file:", file.name, error);
+      alert(`Upload failed for ${file.name}: ${error.message}`);
+      setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
+    }
+  };
+
+  const handleAddByUrl = (target: 'article' | 'update') => {
+    if (!urlInput.trim()) return;
+    
+    // Split by comma or space and filter out empty strings
+    const urls = urlInput.split(/[,\s]+/).map(u => u.trim()).filter(u => u.length > 0);
+    if (urls.length === 0) return;
+
+    const newPreviews = urls.map(url => ({
+      id: Math.random().toString(36).substring(7),
+      localUrl: url,
+      remoteUrl: url,
+      type: urlType,
+      progress: 100,
+      status: 'done' as const
+    }));
+
+    setPreviews(prev => [...prev, ...newPreviews]);
+
+    // Update form state
+    if (target === 'article') {
+      setArticle(prev => ({
+        ...prev,
+        imageUrls: urlType === 'image' ? [...prev.imageUrls, ...urls] : prev.imageUrls,
+        videoUrls: urlType === 'video' ? [...prev.videoUrls, ...urls] : prev.videoUrls
+      }));
+    } else {
+      setUpdate(prev => ({
+        ...prev,
+        imageUrls: urlType === 'image' ? [...prev.imageUrls, ...urls] : prev.imageUrls,
+        videoUrls: urlType === 'video' ? [...prev.videoUrls, ...urls] : prev.videoUrls
+      }));
+    }
+
+    setUrlInput('');
   };
 
   const removeFile = (url: string, type: 'image' | 'video', target: 'article' | 'update') => {
@@ -197,6 +201,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-bbc-dark text-white">
           <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
+            <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
           </h2>
           <button onClick={onClose} className="hover:text-bbc-red transition-colors">
             <X className="w-6 h-6" />
@@ -261,6 +266,38 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 </select>
               </div>
               <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
+                  <label className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                    <Zap className="w-3 h-3 text-bbc-red" /> Add Media by URL (Recommended for Mobile)
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={urlType}
+                      onChange={e => setUrlType(e.target.value as 'image' | 'video')}
+                      className="p-2 text-xs border border-gray-200 rounded bg-white outline-none"
+                    >
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                    </select>
+                    <input 
+                      placeholder="Paste image or video link here..."
+                      className="flex-1 p-2 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-bbc-red"
+                      value={urlInput}
+                      onChange={e => setUrlInput(e.target.value)}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => handleAddByUrl('article')}
+                      className="bg-bbc-dark text-white px-4 py-2 text-xs font-bold rounded hover:bg-black transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 italic">
+                    Tip: Upload your image to a site like <strong>postimages.org</strong> or <strong>imgur.com</strong> and paste the "Direct Link" here.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase text-gray-400">Images</label>
@@ -273,19 +310,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                             referrerPolicy="no-referrer" 
                           />
                           {preview.status === 'uploading' && (
-                            <>
-                              <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="bg-white/80 rounded-full p-1">
-                                  <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
-                                </div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="bg-white/80 rounded-full p-1">
+                                <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
                               </div>
-                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden">
-                                <div 
-                                  className="h-full bg-bbc-red transition-all duration-300" 
-                                  style={{ width: `${preview.progress}%` }}
-                                />
-                              </div>
-                            </>
+                            </div>
+                          )}
+                          {preview.status === 'error' && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
+                              <AlertCircle className="w-6 h-6 text-red-600" />
+                            </div>
                           )}
                           <button 
                             type="button"
@@ -296,25 +330,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           </button>
                         </div>
                       ))}
-                      <button 
-                        type="button"
-                        onClick={() => articleImageInputRef.current?.click()}
-                        className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
-                      >
+                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
                         <ImageIcon className="w-6 h-6 text-gray-300" />
-                      </button>
-                      <input 
-                        type="file"
-                        ref={articleImageInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          files.forEach(file => handleFileUpload(file, 'image', 'article'));
-                          e.target.value = '';
-                        }}
-                      />
+                        <input 
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(file => handleFileUpload(file, 'image', 'article'));
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -326,22 +355,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                             <video src={preview.localUrl} className={`w-full h-full object-cover ${preview.status === 'uploading' ? 'opacity-30' : ''}`} />
                             <div className="absolute inset-0 flex items-center justify-center">
                               {preview.status === 'uploading' ? (
-                                <>
-                                  <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
-                                    <Loader2 className="w-5 h-5 animate-spin text-white" />
-                                  </div>
-                                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 overflow-hidden">
-                                    <div 
-                                      className="h-full bg-bbc-red transition-all duration-300" 
-                                      style={{ width: `${preview.progress}%` }}
-                                    />
-                                  </div>
-                                </>
+                                <div className="bg-white/20 rounded-full p-2 backdrop-blur-sm">
+                                  <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                </div>
                               ) : (
                                 <VideoIcon className="w-6 h-6 text-white" />
                               )}
                             </div>
                           </div>
+                          {preview.status === 'error' && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
+                              <AlertCircle className="w-6 h-6 text-red-600" />
+                            </div>
+                          )}
                           <button 
                             type="button"
                             onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'video', 'article')}
@@ -351,25 +377,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           </button>
                         </div>
                       ))}
-                      <button 
-                        type="button"
-                        onClick={() => articleVideoInputRef.current?.click()}
-                        className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
-                      >
+                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
                         <VideoIcon className="w-6 h-6 text-gray-300" />
-                      </button>
-                      <input 
-                        type="file"
-                        ref={articleVideoInputRef}
-                        className="hidden"
-                        accept="video/*"
-                        multiple
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []);
-                          files.forEach(file => handleFileUpload(file, 'video', 'article'));
-                          e.target.value = '';
-                        }}
-                      />
+                        <input 
+                          type="file"
+                          className="hidden"
+                          accept="video/*"
+                          multiple
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(file => handleFileUpload(file, 'video', 'article'));
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -423,6 +444,35 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 value={update.content}
                 onChange={e => setUpdate({...update, content: e.target.value})}
               />
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
+                <label className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                  <Zap className="w-3 h-3 text-bbc-red" /> Add Media by URL
+                </label>
+                <div className="flex gap-2">
+                  <select 
+                    value={urlType}
+                    onChange={e => setUrlType(e.target.value as 'image' | 'video')}
+                    className="p-2 text-xs border border-gray-200 rounded bg-white outline-none"
+                  >
+                    <option value="image">Image</option>
+                    <option value="video">Video</option>
+                  </select>
+                  <input 
+                    placeholder="Paste link here..."
+                    className="flex-1 p-2 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-bbc-red"
+                    value={urlInput}
+                    onChange={e => setUrlInput(e.target.value)}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => handleAddByUrl('update')}
+                    className="bg-bbc-dark text-white px-4 py-2 text-xs font-bold rounded hover:bg-black transition-colors"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase text-gray-400">Media Attachments</label>
                 <div className="flex flex-wrap gap-2">
@@ -444,13 +494,12 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           <div className="absolute inset-0 flex items-center justify-center">
                             <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
                           </div>
-                          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-100 overflow-hidden">
-                            <div 
-                              className="h-full bg-bbc-red transition-all duration-300" 
-                              style={{ width: `${preview.progress}%` }}
-                            />
-                          </div>
                         </>
+                      )}
+                      {preview.status === 'error' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
+                          <AlertCircle className="w-5 h-5 text-red-600" />
+                        </div>
                       )}
                       <button 
                         type="button"
@@ -461,28 +510,23 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                       </button>
                     </div>
                   ))}
-                  <button 
-                    type="button"
-                    onClick={() => updateMediaInputRef.current?.click()}
-                    className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors"
-                  >
+                  <label className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
                     <ImageIcon className="w-5 h-5 text-gray-300" />
-                  </button>
-                  <input 
-                    type="file"
-                    ref={updateMediaInputRef}
-                    className="hidden"
-                    accept="image/*,video/*"
-                    multiple
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
-                      files.forEach(file => {
-                        const type = file.type.startsWith('image/') ? 'image' : 'video';
-                        handleFileUpload(file, type, 'update');
-                      });
-                      e.target.value = '';
-                    }}
-                  />
+                    <input 
+                      type="file"
+                      className="hidden"
+                      accept="image/*,video/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        files.forEach(file => {
+                          const type = file.type.startsWith('image/') ? 'image' : 'video';
+                          handleFileUpload(file, type, 'update');
+                        });
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
