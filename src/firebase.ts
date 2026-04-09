@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, browserLocalPersistence, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from 'firebase/auth';
+import { initializeAuth, browserLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, doc, getDocFromServer } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -10,9 +10,10 @@ import firebaseConfig from '../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 export const storage = getStorage(app);
-// Initialize Auth with explicit local persistence for better mobile reliability
+// Initialize Auth with explicit local persistence and popup resolver for better mobile reliability
 export const auth = initializeAuth(app, {
   persistence: browserLocalPersistence,
+  popupRedirectResolver: browserPopupRedirectResolver
 });
 
 export const googleProvider = new GoogleAuthProvider();
@@ -83,17 +84,25 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 export const signIn = async () => {
   try {
     await signInWithRedirect(auth, googleProvider);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Sign in error:", error);
-    alert("Sign in failed. Please check your browser settings or try again.");
+    if (error.code === 'auth/operation-not-supported-in-this-environment') {
+      alert("This browser doesn't support this sign-in method. Please try the 'Trouble logging in?' link below or use a different browser.");
+    } else {
+      alert(`Sign in failed: ${error.message} (${error.code})`);
+    }
   }
 };
 export const signInPopup = async () => {
   try {
     await signInWithPopup(auth, googleProvider);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Popup sign in error:", error);
-    alert("Popup sign in failed. You may need to allow popups in your browser.");
+    if (error.code === 'auth/popup-blocked') {
+      alert("Popup was blocked. Please allow popups in your browser settings and try again.");
+    } else {
+      alert(`Popup sign in failed: ${error.message} (${error.code})`);
+    }
   }
 };
 export const logOut = () => signOut(auth);
