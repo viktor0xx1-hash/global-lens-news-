@@ -66,7 +66,7 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
                     <button onClick={logOut} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal underline text-left">Sign Out</button>
                   </div>
                 ) : (
-                  <button onClick={signInPopup} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal text-left">Staff Portal</button>
+                  <button onClick={signInPopup} className="text-gray-300 hover:text-gray-500 transition-colors lowercase italic font-normal text-left">Staff Login</button>
                 )}
               </li>
             </ul>

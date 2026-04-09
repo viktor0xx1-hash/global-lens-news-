@@ -1,13 +1,34 @@
 import { useState, useRef, useEffect } from 'react';
-import { db, storage, handleFirestoreError, OperationType } from '../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, limit } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database } from 'lucide-react';
 
 export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
-  const [version] = useState('v2.1-robust'); // Version tracker for user verification
+  const [success, setSuccess] = useState(false);
+  const [version] = useState('v2.3-final-fix'); 
+  const [user, setUser] = useState(auth.currentUser);
+  const [stats, setStats] = useState({ articles: 0, updates: 0 });
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
+    
+    // Listen for stats to verify DB connection
+    const unsubArticles = onSnapshot(collection(db, 'articles'), snap => {
+      setStats(prev => ({ ...prev, articles: snap.size }));
+    });
+    const unsubUpdates = onSnapshot(collection(db, 'live-updates'), snap => {
+      setStats(prev => ({ ...prev, updates: snap.size }));
+    });
+
+    return () => {
+      unsubscribe();
+      unsubArticles();
+      unsubUpdates();
+    };
+  }, []);
   const articleImageInputRef = useRef<HTMLInputElement>(null);
   const articleVideoInputRef = useRef<HTMLInputElement>(null);
   const updateMediaInputRef = useRef<HTMLInputElement>(null);
@@ -139,13 +160,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     
     const finalize = async () => {
       try {
-        await addDoc(collection(db, 'articles'), {
+        console.log("Attempting to publish article...", article);
+        const docRef = await addDoc(collection(db, 'articles'), {
           ...article,
           publishedAt: serverTimestamp()
         });
-        onClose();
-      } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'articles');
+        console.log("Article published with ID:", docRef.id);
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } catch (error: any) {
+        console.error("Post failed deep error:", error);
+        alert(`❌ PUBLISH FAILED!\n\nReason: ${error.message}\n\nYour Email: ${user?.email}\nVerified: ${user?.emailVerified}\n\nIf this persists, please ensure you are logged in as the authorized admin.`);
       } finally {
         setLoading(false);
       }
@@ -169,15 +197,22 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
     const finalize = async () => {
       try {
-        await addDoc(collection(db, 'live-updates'), {
+        console.log("Attempting to post live update...", update);
+        const docRef = await addDoc(collection(db, 'live-updates'), {
           ...update,
           timestamp: serverTimestamp()
         });
+        console.log("Update posted with ID:", docRef.id);
+        setSuccess(true);
         setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
         setPreviews([]);
-        onClose();
-      } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, 'live-updates');
+        setTimeout(() => {
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      } catch (error: any) {
+        console.error("Update failed deep error:", error);
+        alert(`❌ POST FAILED!\n\nReason: ${error.message}\n\nYour Email: ${user?.email}\nVerified: ${user?.emailVerified}`);
       } finally {
         setLoading(false);
       }
@@ -199,10 +234,19 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-bbc-dark text-white">
-          <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
-            <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
-            <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
-          </h2>
+          <div className="flex flex-col">
+            <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
+              <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
+            </h2>
+            <div className="flex items-center gap-2 mt-1">
+              <div className={`w-2 h-2 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
+              <span className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">
+                {user ? user.email : 'NOT LOGGED IN'} 
+                {user && !user.emailVerified && ' (UNVERIFIED)'}
+              </span>
+            </div>
+          </div>
           <button onClick={onClose} className="hover:text-bbc-red transition-colors">
             <X className="w-6 h-6" />
           </button>
@@ -223,7 +267,31 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 overflow-y-auto relative">
+          {success && (
+            <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center text-center p-6 animate-in fade-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                <CheckCircle2 className="w-12 h-12" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Published Successfully!</h3>
+              <p className="text-gray-500">Your content is now live on the global feed.</p>
+            </div>
+          )}
+
+          <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+              <Database className="w-3 h-3" /> Database Status:
+            </div>
+            <div className="flex gap-3">
+              <span className="text-[10px] font-mono text-bbc-red bg-red-50 px-2 py-0.5 rounded">
+                Articles: {stats.articles}
+              </span>
+              <span className="text-[10px] font-mono text-bbc-dark bg-gray-200 px-2 py-0.5 rounded">
+                Updates: {stats.updates}
+              </span>
+            </div>
+          </div>
+
           {activeTab === 'article' ? (
             <form onSubmit={handlePostArticle} className="space-y-4">
               <input 
