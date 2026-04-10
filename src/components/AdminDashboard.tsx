@@ -8,7 +8,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v2.6-database-switch'); 
+  const [version] = useState('v2.7-rules-deployed'); 
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
 
@@ -169,7 +169,8 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     
     const finalize = async () => {
       try {
-        console.log("Attempting to publish article...", article);
+        const dbId = (db as any)._databaseId || 'default';
+        console.log(`[Admin] Attempting to publish article to ${dbId}...`, article);
         const docRef = await addDoc(collection(db, 'articles'), {
           ...article,
           publishedAt: serverTimestamp()

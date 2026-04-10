@@ -42,10 +42,15 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && 
-             request.auth.token.email == "viktor0xx1@gmail.com";
+             request.auth.token.email == "viktor0xx1@gmail.com" &&
+             request.auth.token.email_verified == true;
     }
 
     // Rules
+    match /test/{docId} {
+      allow read: if true;
+    }
+
     match /articles/{articleId} {
       allow read: if true;
       allow write: if isAdmin();
