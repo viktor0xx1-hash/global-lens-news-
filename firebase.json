@@ -1,7 +1,10 @@
 {
-  "firestore": {
-    "rules": "firestore.rules"
-  },
+  "firestore": [
+    {
+      "database": "global-lens-db",
+      "rules": "firestore.rules"
+    }
+  ],
   "hosting": {
     "public": "dist",
     "ignore": [

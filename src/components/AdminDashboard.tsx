@@ -8,7 +8,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v2.7-rules-deployed'); 
+  const [version] = useState('v2.8-DB-TARGET-FIX'); 
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -17,6 +17,13 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const runConnectionTest = async () => {
     setTestStatus('testing');
     try {
+      // Log DB details for debugging
+      const dbDetails = {
+        databaseId: (db as any)._databaseId?.database || 'unknown',
+        projectId: (db as any)._databaseId?.projectId || 'unknown',
+      };
+      console.log("[Admin] Testing connection to:", dbDetails);
+
       const testRef = await addDoc(collection(db, 'test'), {
         timestamp: serverTimestamp(),
         user: user?.email,
