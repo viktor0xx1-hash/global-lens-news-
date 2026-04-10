@@ -11,6 +11,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [version] = useState('v2.7-rules-deployed'); 
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
@@ -19,8 +20,10 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     const unsubArticles = onSnapshot(collection(db, 'articles'), snap => {
       console.log("[Admin] Articles count update:", snap.size);
       setStats(prev => ({ ...prev, articles: snap.size }));
+      setDbStatus('connected');
     }, err => {
       console.error("[Admin] Articles stats error:", err);
+      setDbStatus('error');
     });
     const unsubUpdates = onSnapshot(collection(db, 'live-updates'), snap => {
       console.log("[Admin] Updates count update:", snap.size);
@@ -267,12 +270,20 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
               <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
               <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
             </h2>
-            <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
-              <span className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">
-                {user ? user.email : 'NOT LOGGED IN'} 
-                {user && !user.emailVerified && ' (UNVERIFIED)'}
-              </span>
+            <div className="flex items-center gap-3 mt-1">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-[10px] text-gray-400 font-mono">
+                  {user ? user.email : 'NOT LOGGED IN'}
+                </span>
+              </div>
+              <div className="w-px h-3 bg-gray-700" />
+              <div className="flex items-center gap-1.5">
+                <Database className={`w-3 h-3 ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500 animate-pulse'}`} />
+                <span className={`text-[10px] font-mono uppercase tracking-wider ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500'}`}>
+                  {dbStatus === 'connected' ? 'DB Online' : dbStatus === 'error' ? 'DB Locked' : 'DB Syncing...'}
+                </span>
+              </div>
             </div>
           </div>
           <button onClick={onClose} className="hover:text-bbc-red transition-colors">
