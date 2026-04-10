@@ -25,9 +25,11 @@ export default function LiveUpdateFeed() {
       limit(20)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`[LiveUpdateFeed] Received ${snapshot.size} updates from ${db.app.options.projectId}/${(db as any)._databaseId || 'default'}`);
       setUpdates(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LiveUpdate[]);
     }, (error) => {
       console.error("LiveUpdateFeed fetch error:", error);
+      handleFirestoreError(error, OperationType.LIST, 'live-updates');
     });
     return () => unsubscribe();
   }, []);

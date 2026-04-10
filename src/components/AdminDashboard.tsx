@@ -17,10 +17,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     
     // Listen for stats to verify DB connection
     const unsubArticles = onSnapshot(collection(db, 'articles'), snap => {
+      console.log("[Admin] Articles count update:", snap.size);
       setStats(prev => ({ ...prev, articles: snap.size }));
+    }, err => {
+      console.error("[Admin] Articles stats error:", err);
     });
     const unsubUpdates = onSnapshot(collection(db, 'live-updates'), snap => {
+      console.log("[Admin] Updates count update:", snap.size);
       setStats(prev => ({ ...prev, updates: snap.size }));
+    }, err => {
+      console.error("[Admin] Updates stats error:", err);
     });
 
     return () => {
@@ -170,6 +176,18 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         });
         console.log("Article published with ID:", docRef.id);
         setSuccess(true);
+        setArticle({
+          title: '',
+          summary: '',
+          content: '',
+          author: '',
+          category: 'Geopolitics',
+          imageUrls: [],
+          videoUrls: [],
+          isBreaking: false
+        });
+        setPreviews([]);
+        setLoading(false);
         setTimeout(() => {
           setSuccess(false);
           onClose();
@@ -212,6 +230,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         setSuccess(true);
         setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
         setPreviews([]);
+        setLoading(false);
         setTimeout(() => {
           setSuccess(false);
           onClose();
@@ -276,6 +295,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-6 overflow-y-auto relative">
+          {loading && (
+            <div className="absolute inset-0 bg-white/80 z-[60] flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
+              <Loader2 className="w-12 h-12 animate-spin text-bbc-red mb-4" />
+              <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest">
+                {uploading ? 'Uploading Media...' : 'Publishing to Feed...'}
+              </h3>
+              <p className="text-xs text-gray-500 mt-2 font-mono">Connecting to global-lens-db...</p>
+            </div>
+          )}
+
           {success && (
             <div className="absolute inset-0 bg-white/95 z-50 flex flex-col items-center justify-center text-center p-6 animate-in fade-in zoom-in duration-300">
               <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">

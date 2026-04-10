@@ -32,9 +32,11 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
       limit(15)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      console.log(`[NewsFeed] Received ${snapshot.size} articles from ${db.app.options.projectId}/${(db as any)._databaseId || 'default'}`);
       setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
     }, (error) => {
       console.error("NewsFeed fetch error:", error);
+      const err = handleFirestoreError(error, OperationType.LIST, 'articles');
     });
     return () => unsubscribe();
   }, []);
@@ -47,12 +49,6 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
           <p className="text-sm font-serif italic text-gray-400 tracking-widest uppercase">
             Gathering Global Intelligence
           </p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 text-[10px] uppercase tracking-widest text-bbc-red hover:underline"
-          >
-            Force Refresh
-          </button>
           <div className="w-12 h-[1px] bg-gray-200" />
         </div>
       </div>
