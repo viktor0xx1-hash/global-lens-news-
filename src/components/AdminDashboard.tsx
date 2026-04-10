@@ -66,6 +66,8 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     progress: number;
     status: 'uploading' | 'done' | 'error';
   }[]>([]);
+  const previewsRef = useRef(previews);
+  useEffect(() => { previewsRef.current = previews; }, [previews]);
   const uploading = previews.some(p => p.status === 'uploading');
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {

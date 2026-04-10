@@ -8,7 +8,7 @@ import firebaseConfig from '../firebase-applet-config.json';
 
 // Initialize Firebase SDK
 const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app); // Use default database to ensure rules apply correctly
+export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId); 
 export const storage = getStorage(app);
 // Initialize Auth with explicit local persistence and popup resolver for better mobile reliability
 export const auth = initializeAuth(app, {
