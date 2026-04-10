@@ -156,11 +156,6 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const previewsRef = useRef(previews);
-  useEffect(() => {
-    previewsRef.current = previews;
-  }, [previews]);
-
   const handlePostArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
