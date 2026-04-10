@@ -12,6 +12,25 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+
+  const runConnectionTest = async () => {
+    setTestStatus('testing');
+    try {
+      const testRef = await addDoc(collection(db, 'test'), {
+        timestamp: serverTimestamp(),
+        user: user?.email,
+        type: 'connection-test'
+      });
+      console.log("Test write successful:", testRef.id);
+      setTestStatus('success');
+      setTimeout(() => setTestStatus('idle'), 3000);
+    } catch (err: any) {
+      console.error("Test write failed:", err);
+      setTestStatus('error');
+      alert(`❌ CONNECTION TEST FAILED!\n\nThis means the database is completely blocking writes, even to the 'test' area.\n\nError: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
@@ -281,9 +300,21 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
               <div className="flex items-center gap-1.5">
                 <Database className={`w-3 h-3 ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500 animate-pulse'}`} />
                 <span className={`text-[10px] font-mono uppercase tracking-wider ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500'}`}>
-                  {dbStatus === 'connected' ? 'DB Online' : dbStatus === 'error' ? 'DB Locked' : 'DB Syncing...'}
+                  {dbStatus === 'connected' ? 'Online' : dbStatus === 'error' ? 'Locked' : 'Sync...'}
                 </span>
               </div>
+              <div className="w-px h-3 bg-gray-700" />
+              <button 
+                onClick={runConnectionTest}
+                disabled={testStatus === 'testing'}
+                className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider transition-colors ${
+                  testStatus === 'success' ? 'bg-green-500/20 text-green-500' : 
+                  testStatus === 'error' ? 'bg-red-500/20 text-red-500' : 
+                  'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                {testStatus === 'testing' ? '...' : testStatus === 'success' ? 'OK' : testStatus === 'error' ? 'Fail' : 'Test'}
+              </button>
             </div>
           </div>
           <button onClick={onClose} className="hover:text-bbc-red transition-colors">
