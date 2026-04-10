@@ -27,7 +27,7 @@ export default function LiveUpdateFeed() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setUpdates(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LiveUpdate[]);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'live-updates');
+      console.error("LiveUpdateFeed fetch error:", error);
     });
     return () => unsubscribe();
   }, []);

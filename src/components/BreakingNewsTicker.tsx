@@ -30,7 +30,7 @@ export default function BreakingNewsTicker() {
       })) as LiveUpdate[];
       setUpdates(newUpdates);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'live-updates');
+      console.error("BreakingNewsTicker fetch error:", error);
     });
 
     return () => unsubscribe();

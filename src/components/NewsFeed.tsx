@@ -34,7 +34,7 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'articles');
+      console.error("NewsFeed fetch error:", error);
     });
     return () => unsubscribe();
   }, []);
@@ -47,6 +47,12 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
           <p className="text-sm font-serif italic text-gray-400 tracking-widest uppercase">
             Gathering Global Intelligence
           </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="mt-4 text-[10px] uppercase tracking-widest text-bbc-red hover:underline"
+          >
+            Force Refresh
+          </button>
           <div className="w-12 h-[1px] bg-gray-200" />
         </div>
       </div>

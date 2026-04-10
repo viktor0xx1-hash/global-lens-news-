@@ -154,8 +154,14 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const previewsRef = useRef(previews);
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
   const handlePostArticle = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     
     const finalize = async () => {
@@ -174,14 +180,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
       } catch (error: any) {
         console.error("Post failed deep error:", error);
         alert(`❌ PUBLISH FAILED!\n\nReason: ${error.message}\n\nYour Email: ${user?.email}\nVerified: ${user?.emailVerified}\n\nIf this persists, please ensure you are logged in as the authorized admin.`);
-      } finally {
         setLoading(false);
       }
     };
 
     if (uploading) {
+      let attempts = 0;
       const check = setInterval(() => {
-        if (!previews.some(p => p.status === 'uploading')) {
+        attempts++;
+        const stillUploading = previewsRef.current.some(p => p.status === 'uploading');
+        if (!stillUploading || attempts > 20) { // 10 second timeout
           clearInterval(check);
           finalize();
         }
@@ -193,6 +201,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
 
   const handlePostUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
     const finalize = async () => {
@@ -213,14 +222,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
       } catch (error: any) {
         console.error("Update failed deep error:", error);
         alert(`❌ POST FAILED!\n\nReason: ${error.message}\n\nYour Email: ${user?.email}\nVerified: ${user?.emailVerified}`);
-      } finally {
         setLoading(false);
       }
     };
 
     if (uploading) {
+      let attempts = 0;
       const check = setInterval(() => {
-        if (!previews.some(p => p.status === 'uploading')) {
+        attempts++;
+        const stillUploading = previewsRef.current.some(p => p.status === 'uploading');
+        if (!stillUploading || attempts > 20) { // 10 second timeout
           clearInterval(check);
           finalize();
         }
@@ -479,7 +490,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 {loading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    {uploading ? 'Finalizing Uploads...' : 'Publishing...'}
+                    {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
                   </>
                 ) : (
                   <>
@@ -613,7 +624,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 {loading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    {uploading ? 'Finalizing Uploads...' : 'Posting...'}
+                    {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
                   </>
                 ) : (
                   <>
