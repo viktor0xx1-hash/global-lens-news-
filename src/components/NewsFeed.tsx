@@ -226,18 +226,16 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                 {article.title}
               </h4>
               <div className="flex gap-2 mb-2">
-                {onEdit && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(article);
-                    }}
-                    className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
-                    title="Edit Article"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleBookmark(article.id);
+                  }}
+                  className={`p-1.5 rounded-full transition-all flex items-center justify-center ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
+                  title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
+                >
+                  <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
+                </button>
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -248,6 +246,18 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                 >
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
+                {onEdit && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(article);
+                    }}
+                    className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all inline-flex"
+                    title="Edit Article"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
               <p className="text-gray-600 text-sm line-clamp-2 font-serif italic">
                 {article.summary}

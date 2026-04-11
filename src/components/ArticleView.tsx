@@ -96,6 +96,13 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Share this story</span>
             <div className="flex items-center gap-2">
+              <button 
+                onClick={() => toggleBookmark(article.id)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-all ${isBookmarked(article.id) ? 'bg-bbc-red text-white' : 'bg-gray-200 text-gray-600'}`}
+                title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
+              >
+                <Bookmark className={`w-4 h-4 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
+              </button>
               <a 
                 href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
                 target="_blank"
@@ -256,6 +263,13 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           <div className="flex flex-col items-center gap-4">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Enjoyed this story? Share it with your network</span>
             <div className="flex items-center gap-3">
+              <button 
+                onClick={() => toggleBookmark(article.id)}
+                className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg ${isBookmarked(article.id) ? 'bg-bbc-red text-white' : 'bg-gray-800 text-white hover:bg-black'}`}
+                title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
+              >
+                <Bookmark className={`w-5 h-5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
+              </button>
               <a 
                 href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
                 target="_blank"
