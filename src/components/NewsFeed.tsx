@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { Clock, User, Tag, Bookmark } from 'lucide-react';
+import { Clock, User, Tag, Bookmark, Edit3 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
 
@@ -21,7 +21,7 @@ interface Article {
   language: string;
 }
 
-export default function NewsFeed({ onArticleClick }: { onArticleClick: (article: Article) => void }) {
+export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (article: Article) => void, onEdit?: (article: Article) => void }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
@@ -104,6 +104,18 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked(mainArticle.id) ? 'fill-current' : ''}`} />
             </button>
+            {onEdit && (
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(mainArticle);
+                }}
+                className="p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-bbc-red transition-colors"
+                title="Edit Article"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </motion.article>
       </div>
@@ -148,6 +160,18 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
                 >
                   <Bookmark className={`w-4 h-4 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
                 </button>
+                {onEdit && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(article);
+                    }}
+                    className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                    title="Edit Article"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           </motion.article>
@@ -178,6 +202,18 @@ export default function NewsFeed({ onArticleClick }: { onArticleClick: (article:
               <h4 className="font-serif font-bold text-xl mb-2 group-hover:text-bbc-red transition-colors">
                 {article.title}
               </h4>
+              {onEdit && (
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(article);
+                  }}
+                  className="mb-2 p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
+                  title="Edit Article"
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+              )}
               <p className="text-gray-600 text-sm line-clamp-2 font-serif italic">
                 {article.summary}
               </p>

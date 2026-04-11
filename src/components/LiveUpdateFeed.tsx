@@ -3,6 +3,7 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { formatTime } from '../lib/utils';
+import { Edit3 } from 'lucide-react';
 
 interface LiveUpdate {
   id: string;
@@ -15,7 +16,7 @@ interface LiveUpdate {
   isBreaking?: boolean;
 }
 
-export default function LiveUpdateFeed() {
+export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdate) => void }) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
 
   useEffect(() => {
@@ -57,8 +58,17 @@ export default function LiveUpdateFeed() {
             className="relative pl-8"
           >
             <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${update.isBreaking ? 'bg-bbc-red' : 'bg-bbc-dark'}`} />
-            <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">
-              {formatTime(update.timestamp)} GMT
+            <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
+              <span>{formatTime(update.timestamp)} GMT</span>
+              {onEdit && (
+                <button 
+                  onClick={() => onEdit(update)}
+                  className="text-gray-300 hover:text-bbc-red transition-colors"
+                  title="Edit Update"
+                >
+                  <Edit3 className="w-3 h-3" />
+                </button>
+              )}
             </div>
             {update.title && (
               <h4 className={`text-sm font-bold mb-1 ${update.isBreaking ? 'text-bbc-red' : 'text-bbc-dark'}`}>

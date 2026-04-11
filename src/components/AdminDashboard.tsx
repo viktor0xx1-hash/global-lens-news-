@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, limit } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2 } from 'lucide-react';
 
-export default function AdminDashboard({ onClose }: { onClose: () => void }) {
+export default function AdminDashboard({ onClose, editItem }: { onClose: () => void, editItem?: any }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v2.8-DB-TARGET-FIX'); 
+  const [version] = useState('v2.9-EDIT-UPLOAD-FIX'); 
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [user, setUser] = useState(auth.currentUser);
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -85,6 +86,77 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
       unsubUpdates();
     };
   }, []);
+
+  // Handle Edit Item
+  useEffect(() => {
+    if (editItem) {
+      setEditingId(editItem.id);
+      if (editItem.publishedAt) {
+        // It's an article
+        setActiveTab('article');
+        setArticle({
+          title: editItem.title || '',
+          summary: editItem.summary || '',
+          content: editItem.content || '',
+          author: editItem.author || '',
+          category: editItem.category || 'Geopolitics',
+          imageUrls: editItem.imageUrls || [],
+          videoUrls: editItem.videoUrls || [],
+          isBreaking: editItem.isBreaking || false
+        });
+        // Populate previews for editing
+        const existingPreviews = [
+          ...(editItem.imageUrls || []).map((url: string) => ({
+            id: Math.random().toString(36).substring(7),
+            localUrl: url,
+            remoteUrl: url,
+            type: 'image' as const,
+            progress: 100,
+            status: 'done' as const
+          })),
+          ...(editItem.videoUrls || []).map((url: string) => ({
+            id: Math.random().toString(36).substring(7),
+            localUrl: url,
+            remoteUrl: url,
+            type: 'video' as const,
+            progress: 100,
+            status: 'done' as const
+          }))
+        ];
+        setPreviews(existingPreviews);
+      } else {
+        // It's a live update
+        setActiveTab('update');
+        setUpdate({
+          title: editItem.title || '',
+          summary: editItem.summary || '',
+          content: editItem.content || '',
+          imageUrls: editItem.imageUrls || [],
+          videoUrls: editItem.videoUrls || [],
+          isBreaking: editItem.isBreaking || false
+        });
+        const existingPreviews = [
+          ...(editItem.imageUrls || []).map((url: string) => ({
+            id: Math.random().toString(36).substring(7),
+            localUrl: url,
+            remoteUrl: url,
+            type: 'image' as const,
+            progress: 100,
+            status: 'done' as const
+          })),
+          ...(editItem.videoUrls || []).map((url: string) => ({
+            id: Math.random().toString(36).substring(7),
+            localUrl: url,
+            remoteUrl: url,
+            type: 'video' as const,
+            progress: 100,
+            status: 'done' as const
+          }))
+        ];
+        setPreviews(existingPreviews);
+      }
+    }
+  }, [editItem]);
   const articleImageInputRef = useRef<HTMLInputElement>(null);
   const articleVideoInputRef = useRef<HTMLInputElement>(null);
   const updateMediaInputRef = useRef<HTMLInputElement>(null);
@@ -212,6 +284,29 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const handleDelete = async () => {
+    if (!editingId) return;
+    if (!window.confirm("Are you sure you want to delete this content? This cannot be undone.")) return;
+    
+    setLoading(true);
+    try {
+      const collectionName = activeTab === 'article' ? 'articles' : 'live-updates';
+      await deleteDoc(doc(db, collectionName, editingId));
+      console.log("Deleted document:", editingId);
+      setSuccess(true);
+      setEditingId(null);
+      setLoading(false);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 2000);
+    } catch (error: any) {
+      console.error("Delete failed:", error);
+      alert(`❌ DELETE FAILED!\n\nReason: ${error.message}`);
+      setLoading(false);
+    }
+  };
+
   const handlePostArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -220,13 +315,24 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     const finalize = async () => {
       try {
         const dbId = (db as any)._databaseId || 'default';
-        console.log(`[Admin] Attempting to publish article to ${dbId}...`, article);
-        const docRef = await addDoc(collection(db, 'articles'), {
-          ...article,
-          publishedAt: serverTimestamp()
-        });
-        console.log("Article published with ID:", docRef.id);
+        console.log(`[Admin] Attempting to ${editingId ? 'update' : 'publish'} article to ${dbId}...`, article);
+        
+        if (editingId) {
+          await updateDoc(doc(db, 'articles', editingId), {
+            ...article,
+            updatedAt: serverTimestamp()
+          });
+          console.log("Article updated with ID:", editingId);
+        } else {
+          const docRef = await addDoc(collection(db, 'articles'), {
+            ...article,
+            publishedAt: serverTimestamp()
+          });
+          console.log("Article published with ID:", docRef.id);
+        }
+
         setSuccess(true);
+        setEditingId(null);
         setArticle({
           title: '',
           summary: '',
@@ -273,12 +379,21 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     const finalize = async () => {
       try {
         console.log("Attempting to post live update...", update);
-        const docRef = await addDoc(collection(db, 'live-updates'), {
-          ...update,
-          timestamp: serverTimestamp()
-        });
-        console.log("Update posted with ID:", docRef.id);
+        if (editingId) {
+          await updateDoc(doc(db, 'live-updates', editingId), {
+            ...update,
+            updatedAt: serverTimestamp()
+          });
+          console.log("Update updated with ID:", editingId);
+        } else {
+          const docRef = await addDoc(collection(db, 'live-updates'), {
+            ...update,
+            timestamp: serverTimestamp()
+          });
+          console.log("Update posted with ID:", docRef.id);
+        }
         setSuccess(true);
+        setEditingId(null);
         setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
         setPreviews([]);
         setLoading(false);
@@ -314,7 +429,7 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-bbc-dark text-white">
           <div className="flex flex-col">
             <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
+              <ShieldAlert className="w-5 h-5 text-bbc-red" /> {editingId ? 'Edit Content' : 'Editor Control'}
               <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
             </h2>
             <div className="flex flex-wrap items-center gap-3 mt-1">
@@ -467,41 +582,11 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 </select>
               </div>
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
-                  <label className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
-                    <Zap className="w-3 h-3 text-bbc-red" /> Add Media by URL (Recommended for Mobile)
-                  </label>
-                  <div className="flex gap-2">
-                    <select 
-                      value={urlType}
-                      onChange={e => setUrlType(e.target.value as 'image' | 'video')}
-                      className="p-2 text-xs border border-gray-200 rounded bg-white outline-none"
-                    >
-                      <option value="image">Image</option>
-                      <option value="video">Video</option>
-                    </select>
-                    <input 
-                      placeholder="Paste image or video link here..."
-                      className="flex-1 p-2 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-bbc-red"
-                      value={urlInput}
-                      onChange={e => setUrlInput(e.target.value)}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => handleAddByUrl('article')}
-                      className="bg-bbc-dark text-white px-4 py-2 text-xs font-bold rounded hover:bg-black transition-colors"
-                    >
-                      Add
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-gray-400 italic">
-                    Tip: Upload your image to a site like <strong>postimages.org</strong> or <strong>imgur.com</strong> and paste the "Direct Link" here.
-                  </p>
-                </div>
-
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-gray-400">Images</label>
+                    <label className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">
+                      <ImageIcon className="w-3 h-3" /> Direct Gallery Upload
+                    </label>
                     <div className="flex flex-wrap gap-2">
                       {previews.filter(p => p.type === 'image').map(preview => (
                         <div key={preview.id} className="relative w-20 h-20 group">
@@ -531,8 +616,9 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           </button>
                         </div>
                       ))}
-                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
+                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex flex-col items-center justify-center hover:border-bbc-red transition-colors cursor-pointer bg-white">
                         <ImageIcon className="w-6 h-6 text-gray-300" />
+                        <span className="text-[8px] font-bold uppercase text-gray-400 mt-1">Upload</span>
                         <input 
                           type="file"
                           className="hidden"
@@ -548,7 +634,9 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase text-gray-400">Videos</label>
+                    <label className="text-xs font-bold uppercase text-gray-400 flex items-center gap-2">
+                      <VideoIcon className="w-3 h-3" /> Video Upload
+                    </label>
                     <div className="flex flex-wrap gap-2">
                       {previews.filter(p => p.type === 'video').map(preview => (
                         <div key={preview.id} className="relative w-20 h-20 group">
@@ -578,8 +666,9 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                           </button>
                         </div>
                       ))}
-                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
+                      <label className="w-20 h-20 border-2 border-dashed border-gray-200 rounded flex flex-col items-center justify-center hover:border-bbc-red transition-colors cursor-pointer bg-white">
                         <VideoIcon className="w-6 h-6 text-gray-300" />
+                        <span className="text-[8px] font-bold uppercase text-gray-400 mt-1">Upload</span>
                         <input 
                           type="file"
                           className="hidden"
@@ -595,6 +684,35 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                     </div>
                   </div>
                 </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
+                  <label className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
+                    <Zap className="w-3 h-3 text-bbc-red" /> Alternative: Add by URL
+                  </label>
+                  <div className="flex gap-2">
+                    <select 
+                      value={urlType}
+                      onChange={e => setUrlType(e.target.value as 'image' | 'video')}
+                      className="p-2 text-xs border border-gray-200 rounded bg-white outline-none"
+                    >
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                    </select>
+                    <input 
+                      placeholder="Paste image or video link here..."
+                      className="flex-1 p-2 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-bbc-red"
+                      value={urlInput}
+                      onChange={e => setUrlInput(e.target.value)}
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => handleAddByUrl('article')}
+                      className="bg-bbc-dark text-white px-4 py-2 text-xs font-bold rounded hover:bg-black transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
               </div>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input 
@@ -605,22 +723,35 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 />
                 <span className="text-sm font-bold uppercase text-bbc-red">Mark as Breaking News</span>
               </label>
-              <button 
-                disabled={loading}
-                className="w-full bg-bbc-red text-white py-4 font-bold uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Publish Article
-                  </>
+              <div className="flex gap-4">
+                {editingId && (
+                  <button 
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="flex-1 bg-gray-100 text-gray-600 py-4 font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete
+                  </button>
                 )}
-              </button>
+                <button 
+                  disabled={loading}
+                  className="flex-[2] bg-bbc-red text-white py-4 font-bold uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      {editingId ? 'Save Changes' : 'Publish Article'}
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           ) : (
             <form onSubmit={handlePostUpdate} className="space-y-4">
@@ -739,22 +870,35 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                 />
                 <span className="text-sm font-bold uppercase text-bbc-red">Major Breaking Update</span>
               </label>
-              <button 
-                disabled={loading}
-                className="w-full bg-bbc-dark text-white py-4 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    Post Update
-                  </>
+              <div className="flex gap-4">
+                {editingId && (
+                  <button 
+                    type="button"
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="flex-1 bg-gray-100 text-gray-600 py-4 font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    Delete
+                  </button>
                 )}
-              </button>
+                <button 
+                  disabled={loading}
+                  className="flex-[2] bg-bbc-dark text-white py-4 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      {editingId ? 'Save Changes' : 'Post Update'}
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           )}
         </div>

@@ -41,9 +41,9 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
+      return request.auth != null && 
              (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\.com") ||
-              request.auth.token.email == "viktor0xx1@gmail.com");
+              request.auth.uid == "Dt2QUfA9nCMCTb0NNGg1Ngkf86E3");
     }
 
     // Rules

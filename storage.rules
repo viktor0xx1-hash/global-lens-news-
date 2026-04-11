@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /uploads/{allPaths=**} {
+      // Allow anyone to read images/videos
+      allow read: if true;
+      
+      // Allow only the admin to upload/delete
+      // Using the same UID and Email logic as Firestore
+      allow write: if request.auth != null && 
+                   (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\.com") || 
+                    request.auth.uid == "Dt2QUfA9nCMCTb0NNGg1Ngkf86E3");
+    }
+  }
+}
