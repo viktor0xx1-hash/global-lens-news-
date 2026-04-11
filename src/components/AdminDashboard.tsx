@@ -13,6 +13,13 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'uid' | 'rules'>('idle');
+
+  const copyToClipboard = (text: string, type: 'uid' | 'rules') => {
+    navigator.clipboard.writeText(text);
+    setCopyStatus(type);
+    setTimeout(() => setCopyStatus('idle'), 2000);
+  };
 
   const runConnectionTest = async () => {
     setTestStatus('testing');
@@ -21,13 +28,18 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
       const dbDetails = {
         databaseId: (db as any)._databaseId?.database || 'unknown',
         projectId: (db as any)._databaseId?.projectId || 'unknown',
+        authUid: user?.uid,
+        authEmail: user?.email
       };
       console.log("[Admin] Testing connection to:", dbDetails);
 
+      // Try a write to the test collection
       const testRef = await addDoc(collection(db, 'test'), {
         timestamp: serverTimestamp(),
-        user: user?.email,
-        type: 'connection-test'
+        userEmail: user?.email,
+        userUid: user?.uid,
+        type: 'connection-test',
+        version: 'v2.8'
       });
       console.log("Test write successful:", testRef.id);
       setTestStatus('success');
@@ -35,7 +47,16 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
     } catch (err: any) {
       console.error("Test write failed:", err);
       setTestStatus('error');
-      alert(`❌ CONNECTION TEST FAILED!\n\nThis means the database is completely blocking writes, even to the 'test' area.\n\nError: ${err.message}`);
+      
+      // Provide more helpful error message
+      let msg = `❌ CONNECTION TEST FAILED!\n\n`;
+      if (err.message.includes('permission')) {
+        msg += `Reason: Security Rules are blocking this write.\n\n`;
+        msg += `Action: Please copy the 'Rules' from the dashboard and paste them into your Firebase Console for the 'global-lens-db' database.`;
+      } else {
+        msg += `Error: ${err.message}`;
+      }
+      alert(msg);
     }
   };
 
@@ -296,13 +317,28 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
               <ShieldAlert className="w-5 h-5 text-bbc-red" /> Editor Control
               <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
             </h2>
-            <div className="flex items-center gap-3 mt-1">
+            <div className="flex flex-wrap items-center gap-3 mt-1">
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
                 <span className="text-[10px] text-gray-400 font-mono">
                   {user ? user.email : 'NOT LOGGED IN'}
                 </span>
               </div>
+              
+              {user && (
+                <>
+                  <div className="w-px h-3 bg-gray-700" />
+                  <button 
+                    onClick={() => copyToClipboard(user.uid, 'uid')}
+                    className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-white font-mono transition-colors"
+                    title="Click to copy UID"
+                  >
+                    UID: {user.uid.substring(0, 6)}... 
+                    {copyStatus === 'uid' ? <span className="text-green-500">Copied!</span> : <FileText className="w-3 h-3" />}
+                  </button>
+                </>
+              )}
+
               <div className="w-px h-3 bg-gray-700" />
               <div className="flex items-center gap-1.5">
                 <Database className={`w-3 h-3 ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500 animate-pulse'}`} />
@@ -310,18 +346,28 @@ export default function AdminDashboard({ onClose }: { onClose: () => void }) {
                   {dbStatus === 'connected' ? 'Online' : dbStatus === 'error' ? 'Locked' : 'Sync...'}
                 </span>
               </div>
+              
               <div className="w-px h-3 bg-gray-700" />
-              <button 
-                onClick={runConnectionTest}
-                disabled={testStatus === 'testing'}
-                className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider transition-colors ${
-                  testStatus === 'success' ? 'bg-green-500/20 text-green-500' : 
-                  testStatus === 'error' ? 'bg-red-500/20 text-red-500' : 
-                  'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {testStatus === 'testing' ? '...' : testStatus === 'success' ? 'OK' : testStatus === 'error' ? 'Fail' : 'Test'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={runConnectionTest}
+                  disabled={testStatus === 'testing'}
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider transition-colors ${
+                    testStatus === 'success' ? 'bg-green-500/20 text-green-500' : 
+                    testStatus === 'error' ? 'bg-red-500/20 text-red-500' : 
+                    'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {testStatus === 'testing' ? '...' : testStatus === 'success' ? 'OK' : testStatus === 'error' ? 'Fail' : 'Test'}
+                </button>
+                
+                <button 
+                  onClick={() => copyToClipboard(`rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isAdmin() {\n      return request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}");\n    }\n    match /test/{docId} { allow read, write: if true; }\n    match /articles/{articleId} { allow read: if true; allow write: if isAdmin(); }\n    match /live-updates/{updateId} { allow read: if true; allow write: if isAdmin(); }\n    match /users/{userId} { allow read: if request.auth != null && (request.auth.uid == userId || isAdmin()); allow write: if isAdmin(); }\n  }\n}`, 'rules')}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-bbc-red/20 text-bbc-red hover:bg-bbc-red/30 transition-colors"
+                >
+                  {copyStatus === 'rules' ? 'Rules Copied!' : 'Copy Rules'}
+                </button>
+              </div>
             </div>
           </div>
           <button onClick={onClose} className="hover:text-bbc-red transition-colors">
