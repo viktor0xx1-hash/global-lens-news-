@@ -50,6 +50,9 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
                 <TrendingUp className="w-4 h-4" /> Geopolitics
               </a>
+              <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
+                <Globe className="w-4 h-4" /> Africa
+              </a>
             </nav>
           </div>
 

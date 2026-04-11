@@ -738,6 +738,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   <option>Economy</option>
                   <option>Conflict</option>
                   <option>Diplomacy</option>
+                  <option>Africa</option>
                 </select>
               </div>
               <div className="space-y-4">
