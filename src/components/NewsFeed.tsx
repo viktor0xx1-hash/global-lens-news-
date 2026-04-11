@@ -169,9 +169,10 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                     e.stopPropagation();
                     toggleBookmark(article.id);
                   }}
-                  className={`p-1 rounded-full transition-colors ${isBookmarked(article.id) ? 'text-bbc-red' : 'text-gray-300 hover:text-bbc-red'}`}
+                  className={`p-1.5 rounded-full transition-all flex items-center justify-center ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
+                  title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
                 >
-                  <Bookmark className={`w-4 h-4 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
+                  <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
                 </button>
                 <button 
                   onClick={(e) => {

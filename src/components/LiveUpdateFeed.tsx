@@ -3,7 +3,8 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { formatTime } from '../lib/utils';
-import { Edit3, Share2 } from 'lucide-react';
+import { Edit3, Share2, Bookmark } from 'lucide-react';
+import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import ShareModal from './ShareModal';
 
 interface LiveUpdate {
@@ -20,6 +21,7 @@ interface LiveUpdate {
 export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdate) => void }) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
   const [sharingUpdate, setSharingUpdate] = useState<LiveUpdate | null>(null);
+  const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
     const q = query(
@@ -63,6 +65,13 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
             <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
               <span>{formatTime(update.timestamp)} GMT</span>
               <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggleBookmark(update.id)}
+                  className={`p-1.5 rounded-full transition-all shadow-sm ${isBookmarked(update.id) ? 'bg-red-50 text-bbc-red' : 'bg-white border border-gray-100 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
+                  title={isBookmarked(update.id) ? "Remove Bookmark" : "Bookmark Update"}
+                >
+                  <Bookmark className={`w-3 h-3 ${isBookmarked(update.id) ? 'fill-current' : ''}`} />
+                </button>
                 <button 
                   onClick={() => setSharingUpdate(update)}
                   className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-400 hover:bg-bbc-red hover:text-white transition-all shadow-sm"
