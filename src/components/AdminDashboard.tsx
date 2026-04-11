@@ -2,15 +2,29 @@ import { useState, useRef, useEffect } from 'react';
 import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2 } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
 
 export default function AdminDashboard({ onClose, editItem }: { onClose: () => void, editItem?: any }) {
-  const [activeTab, setActiveTab] = useState<'article' | 'update'>('article');
+  const [activeTab, setActiveTab] = useState<'article' | 'update' | 'manage' | 'settings'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v2.9-EDIT-UPLOAD-FIX'); 
+  const [version] = useState('v3.0-CLOUDINARY-STORAGE'); 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [user, setUser] = useState(auth.currentUser);
+  const [articlesList, setArticlesList] = useState<any[]>([]);
+  const [updatesList, setUpdatesList] = useState<any[]>([]);
+  
+  // Cloudinary Settings
+  const [cloudName, setCloudName] = useState(localStorage.getItem('cloudinary_name') || '');
+  const [uploadPreset, setUploadPreset] = useState(localStorage.getItem('cloudinary_preset') || '');
+  const [showSettings, setShowSettings] = useState(!localStorage.getItem('cloudinary_name'));
+
+  const saveSettings = () => {
+    localStorage.setItem('cloudinary_name', cloudName);
+    localStorage.setItem('cloudinary_preset', uploadPreset);
+    setShowSettings(false);
+    alert("Storage settings saved! You can now use the Gallery Upload.");
+  };
   const [stats, setStats] = useState({ articles: 0, updates: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -76,14 +90,21 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     const unsubUpdates = onSnapshot(collection(db, 'live-updates'), snap => {
       console.log("[Admin] Updates count update:", snap.size);
       setStats(prev => ({ ...prev, updates: snap.size }));
+      setUpdatesList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, err => {
       console.error("[Admin] Updates stats error:", err);
+    });
+
+    // Also fetch articles for the manage tab
+    const unsubArticlesList = onSnapshot(collection(db, 'articles'), snap => {
+      setArticlesList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
     return () => {
       unsubscribe();
       unsubArticles();
       unsubUpdates();
+      unsubArticlesList();
     };
   }, []);
 
@@ -199,21 +220,32 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const uploading = previews.some(p => p.status === 'uploading');
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
+    if (!cloudName || !uploadPreset) {
+      alert("Please configure your Cloudinary settings first! Click the Settings icon at the top.");
+      setActiveTab('settings');
+      return;
+    }
+
     const id = Math.random().toString(36).substring(7);
     const localUrl = URL.createObjectURL(file);
 
-    // Add to previews immediately for instant feedback
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
 
     try {
-      // SIMPLE UPLOAD - No compression, no resumable task to avoid mobile hangs
-      const storageRef = ref(storage, `uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
+
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${type}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error("Cloudinary upload failed");
       
-      // We use a simple promise-based upload
-      const result = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(result.ref);
+      const data = await response.json();
+      const url = data.secure_url;
       
-      // Update the actual form state
       if (target === 'article') {
         if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
         else setArticle(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
@@ -222,11 +254,10 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         else setUpdate(prev => ({ ...prev, videoUrls: [...prev.videoUrls, url] }));
       }
 
-      // Mark preview as done
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url, progress: 100 } : p));
     } catch (error: any) {
-      console.error("Upload failed for file:", file.name, error);
-      alert(`Upload failed for ${file.name}: ${error.message}`);
+      console.error("Cloudinary upload failed:", error);
+      alert(`Upload failed: ${error.message}. Check your Cloud Name and Preset.`);
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
     }
   };
@@ -493,19 +524,31 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         <div className="flex border-b border-gray-100">
           <button 
             onClick={() => setActiveTab('article')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'article' ? 'text-bbc-red border-b-2 border-bbc-red' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'article' ? 'bg-bbc-red text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
-            <FileText className="w-4 h-4" /> New Article
+            <FileText className="w-4 h-4" /> {editingId ? 'Edit Article' : 'New Article'}
           </button>
           <button 
             onClick={() => setActiveTab('update')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'update' ? 'text-bbc-red border-b-2 border-bbc-red' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'update' ? 'bg-bbc-dark text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
-            <Zap className="w-4 h-4" /> Live Update
+            <Zap className="w-4 h-4" /> {editingId ? 'Edit Update' : 'Live Update'}
+          </button>
+          <button 
+            onClick={() => setActiveTab('manage')}
+            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'manage' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
+          >
+            <List className="w-4 h-4" /> Manage
+          </button>
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'settings' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
+          >
+            <Settings className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto relative">
+        <div className="flex-1 overflow-y-auto p-6 relative">
           {loading && (
             <div className="absolute inset-0 bg-white/80 z-[60] flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
               <Loader2 className="w-12 h-12 animate-spin text-bbc-red mb-4" />
@@ -526,21 +569,137 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
-            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-              <Database className="w-3 h-3" /> Database Status:
+          {activeTab === 'settings' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h3 className="text-blue-800 font-bold mb-2 flex items-center gap-2">
+                  <Settings className="w-4 h-4" /> Storage Configuration
+                </h3>
+                <p className="text-sm text-blue-700 mb-4">
+                  Since Firebase Storage requires a credit card, we use <strong>Cloudinary</strong> for free permanent storage.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-blue-600 mb-1">Cloud Name</label>
+                    <input 
+                      value={cloudName}
+                      onChange={e => setCloudName(e.target.value)}
+                      placeholder="e.g. dxy123abc"
+                      className="w-full p-2 border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase text-blue-600 mb-1">Unsigned Upload Preset</label>
+                    <input 
+                      value={uploadPreset}
+                      onChange={e => setUploadPreset(e.target.value)}
+                      placeholder="e.g. ml_default"
+                      className="w-full p-2 border border-blue-200 rounded outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  <button 
+                    onClick={saveSettings}
+                    className="w-full bg-blue-600 text-white py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-blue-700 transition-colors"
+                  >
+                    Save Storage Settings
+                  </button>
+                </div>
+              </div>
+              <div className="text-xs text-gray-500 space-y-2">
+                <p className="font-bold">How to get these for free:</p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li>Create a free account at <strong>Cloudinary.com</strong></li>
+                  <li>Copy your <strong>Cloud Name</strong> from the dashboard</li>
+                  <li>Go to Settings &gt; Upload &gt; Add Upload Preset</li>
+                  <li>Set "Signing Mode" to <strong>Unsigned</strong> and copy the preset name</li>
+                </ol>
+              </div>
             </div>
-            <div className="flex gap-3">
-              <span className="text-[10px] font-mono text-bbc-red bg-red-50 px-2 py-0.5 rounded">
-                Articles: {stats.articles}
-              </span>
-              <span className="text-[10px] font-mono text-bbc-dark bg-gray-200 px-2 py-0.5 rounded">
-                Updates: {stats.updates}
-              </span>
-            </div>
-          </div>
+          )}
 
-          {activeTab === 'article' ? (
+          {activeTab === 'manage' && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 border-b pb-2">Recent Articles</h3>
+                {articlesList.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No articles found.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {articlesList.map(item => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100 hover:bg-white transition-colors group">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm truncate">{item.title}</h4>
+                          <p className="text-[10px] text-gray-400 uppercase">{item.category} • {new Date(item.publishedAt?.seconds * 1000).toLocaleDateString()}</p>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setArticle(item);
+                              setPreviews((item.imageUrls || []).map((url: string) => ({ id: Math.random().toString(), localUrl: url, remoteUrl: url, type: 'image', status: 'done', progress: 100 })));
+                              setActiveTab('article');
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 border-b pb-2">Live Updates</h3>
+                {updatesList.length === 0 ? (
+                  <p className="text-sm text-gray-400 italic">No updates found.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {updatesList.map(item => (
+                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100 hover:bg-white transition-colors group">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm truncate">{item.title || item.content.substring(0, 50)}</h4>
+                          <p className="text-[10px] text-gray-400 uppercase">{new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => {
+                              setEditingId(item.id);
+                              setUpdate(item);
+                              setPreviews((item.imageUrls || []).map((url: string) => ({ id: Math.random().toString(), localUrl: url, remoteUrl: url, type: 'image', status: 'done', progress: 100 })));
+                              setActiveTab('update');
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(activeTab === 'article' || activeTab === 'update') && !showSettings && (
+            <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <Database className="w-3 h-3" /> Database Status:
+              </div>
+              <div className="flex gap-3">
+                <span className="text-[10px] font-mono text-bbc-red bg-red-50 px-2 py-0.5 rounded">
+                  Articles: {stats.articles}
+                </span>
+                <span className="text-[10px] font-mono text-bbc-dark bg-gray-200 px-2 py-0.5 rounded">
+                  Updates: {stats.updates}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'article' && !showSettings && (
             <form onSubmit={handlePostArticle} className="space-y-4">
               <input 
                 required
@@ -753,7 +912,9 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                 </button>
               </div>
             </form>
-          ) : (
+          )}
+
+          {activeTab === 'update' && !showSettings && (
             <form onSubmit={handlePostUpdate} className="space-y-4">
               <input 
                 required

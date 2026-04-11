@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { Clock, User, Tag, Bookmark, Edit3 } from 'lucide-react';
+import { Clock, User, Tag, Bookmark, Edit3, Share2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
+import ShareModal from './ShareModal';
 
 interface Article {
   id: string;
@@ -23,6 +24,7 @@ interface Article {
 
 export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (article: Article) => void, onEdit?: (article: Article) => void }) {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
@@ -104,6 +106,16 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked(mainArticle.id) ? 'fill-current' : ''}`} />
             </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setSharingArticle(mainArticle);
+              }}
+              className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+              title="Share Article"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
             {onEdit && (
               <button 
                 onClick={(e) => {
@@ -160,6 +172,16 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                 >
                   <Bookmark className={`w-4 h-4 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
                 </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSharingArticle(article);
+                  }}
+                  className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                  title="Share Article"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
                 {onEdit && (
                   <button 
                     onClick={(e) => {
@@ -202,18 +224,30 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
               <h4 className="font-serif font-bold text-xl mb-2 group-hover:text-bbc-red transition-colors">
                 {article.title}
               </h4>
-              {onEdit && (
+              <div className="flex gap-2 mb-2">
+                {onEdit && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(article);
+                    }}
+                    className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
+                    title="Edit Article"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                )}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEdit(article);
+                    setSharingArticle(article);
                   }}
-                  className="mb-2 p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
-                  title="Edit Article"
+                  className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
+                  title="Share Article"
                 >
-                  <Edit3 className="w-4 h-4" />
+                  <Share2 className="w-4 h-4" />
                 </button>
-              )}
+              </div>
               <p className="text-gray-600 text-sm line-clamp-2 font-serif italic">
                 {article.summary}
               </p>
@@ -222,6 +256,14 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
         </div>
       )}
     </div>
+      {/* Share Modal */}
+      {sharingArticle && (
+        <ShareModal 
+          isOpen={!!sharingArticle} 
+          onClose={() => setSharingArticle(null)} 
+          article={sharingArticle} 
+        />
+      )}
     </div>
   );
 }

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { X, Clock, User, Tag, Share2, Bookmark } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import SupportCard from './SupportCard';
 import { formatDate } from '../lib/utils';
+import ShareModal from './ShareModal';
 
 interface Article {
   id: string;
@@ -22,6 +24,7 @@ interface Article {
 
 export default function ArticleView({ article, onClose }: { article: Article, onClose: () => void }) {
   const { toggleBookmark, isBookmarked } = useUserPreferences();
+  const [showShare, setShowShare] = useState(false);
 
   const displayArticle = article;
 
@@ -52,18 +55,7 @@ export default function ArticleView({ article, onClose }: { article: Article, on
               <Bookmark className={`w-5 h-5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
             </button>
             <button 
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: article.title,
-                    text: article.summary,
-                    url: window.location.href,
-                  });
-                } else {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert('Link copied to clipboard!');
-                }
-              }}
+              onClick={() => setShowShare(true)}
               className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <Share2 className="w-5 h-5 text-gray-600" />
@@ -207,6 +199,12 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           </div>
         </footer>
       </article>
+
+      <ShareModal 
+        isOpen={showShare} 
+        onClose={() => setShowShare(false)} 
+        article={article} 
+      />
     </motion.div>
   );
 }
