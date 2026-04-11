@@ -5,39 +5,74 @@ import { motion } from 'motion/react';
 import { X, Bookmark, Clock, Tag } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 
-interface Article {
+interface BookmarkedItem {
   id: string;
-  title: string;
-  summary: string;
-  category: string;
-  imageUrl: string;
-  publishedAt: any;
+  title?: string;
+  summary?: string;
+  content?: string;
+  category?: string;
+  imageUrl?: string;
+  imageUrls?: string[];
+  publishedAt?: any;
+  timestamp?: any;
+  type: 'article' | 'update';
 }
 
 export default function BookmarksView({ onClose, onArticleClick }: { onClose: () => void, onArticleClick: (article: any) => void }) {
-  const [bookmarkedArticles, setBookmarkedArticles] = useState<Article[]>([]);
+  const [bookmarkedItems, setBookmarkedItems] = useState<BookmarkedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { bookmarks, toggleBookmark } = useUserPreferences();
 
   useEffect(() => {
     const fetchBookmarks = async () => {
       if (bookmarks.length === 0) {
-        setBookmarkedArticles([]);
+        setBookmarkedItems([]);
         setLoading(false);
         return;
       }
 
       try {
-        // Firestore 'in' query is limited to 10 IDs, but for a simple bookmark feature it's okay for now
-        // For more, we'd fetch in chunks or individually
-        const q = query(
+        setLoading(true);
+        // Fetch from articles
+        const articlesQuery = query(
           collection(db, 'articles'),
           where(documentId(), 'in', bookmarks.slice(0, 10))
         );
-        const snapshot = await getDocs(q);
-        setBookmarkedArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
+        
+        // Fetch from live-updates
+        const updatesQuery = query(
+          collection(db, 'live-updates'),
+          where(documentId(), 'in', bookmarks.slice(0, 10))
+        );
+
+        const [articlesSnap, updatesSnap] = await Promise.all([
+          getDocs(articlesQuery),
+          getDocs(updatesQuery)
+        ]);
+
+        const articles = articlesSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(), 
+          type: 'article' as const 
+        }));
+        
+        const updates = updatesSnap.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data(), 
+          type: 'update' as const 
+        }));
+
+        // Combine and sort by date (publishedAt or timestamp)
+        const combined = [...articles, ...updates].sort((a: any, b: any) => {
+          const dateA = a.publishedAt || a.timestamp;
+          const dateB = b.publishedAt || b.timestamp;
+          return (dateB?.seconds || 0) - (dateA?.seconds || 0);
+        });
+
+        setBookmarkedItems(combined as BookmarkedItem[]);
       } catch (error) {
-        handleFirestoreError(error, OperationType.LIST, 'articles');
+        console.error("Error fetching bookmarks:", error);
+        // We don't want to show a big error if one collection fails or is empty
       } finally {
         setLoading(false);
       }
@@ -67,7 +102,7 @@ export default function BookmarksView({ onClose, onArticleClick }: { onClose: ()
           <div className="flex items-center justify-center h-32">
             <div className="w-6 h-6 border-2 border-bbc-red border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : bookmarkedArticles.length === 0 ? (
+        ) : bookmarkedItems.length === 0 ? (
           <div className="text-center py-12">
             <Bookmark className="w-12 h-12 text-gray-200 mx-auto mb-4" />
             <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">
@@ -76,32 +111,43 @@ export default function BookmarksView({ onClose, onArticleClick }: { onClose: ()
           </div>
         ) : (
           <div className="space-y-6">
-            {bookmarkedArticles.map((article) => (
+            {bookmarkedItems.map((item) => (
               <div 
-                key={article.id}
+                key={item.id}
                 className="group cursor-pointer flex gap-4"
-                onClick={() => onArticleClick(article)}
+                onClick={() => {
+                  if (item.type === 'article') {
+                    onArticleClick(item);
+                  }
+                }}
               >
                 <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-gray-100 rounded">
                   <img 
-                    src={article.imageUrl || `https://picsum.photos/seed/${article.id}/200/200`} 
-                    alt={article.title}
+                    src={item.imageUrls?.[0] || item.imageUrl || `https://picsum.photos/seed/${item.id}/200/200`} 
+                    alt={item.title || 'Update'}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     referrerPolicy="no-referrer"
                   />
                 </div>
                 <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded ${item.type === 'article' ? 'bg-blue-100 text-blue-600' : 'bg-bbc-red text-white'}`}>
+                      {item.type}
+                    </span>
+                    {item.category && (
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400">
+                        {item.category}
+                      </span>
+                    )}
+                  </div>
                   <h4 className="font-serif font-bold text-sm leading-snug group-hover:text-bbc-red transition-colors line-clamp-2">
-                    {article.title}
+                    {item.title || item.summary || (item.content ? item.content.substring(0, 60) + '...' : 'Live Update')}
                   </h4>
-                  <div className="flex items-center justify-between mt-2">
-                    <div className="text-[10px] text-gray-400 uppercase tracking-wider font-bold flex items-center gap-1">
-                      <Tag className="w-3 h-3" /> {article.category}
-                    </div>
+                  <div className="flex items-center justify-end mt-2">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleBookmark(article.id);
+                        toggleBookmark(item.id);
                       }}
                       className="text-bbc-red hover:text-red-700 transition-colors"
                     >
