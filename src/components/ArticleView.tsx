@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
-import { X, Clock, User, Tag, Share2, Bookmark } from 'lucide-react';
+import { X, Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, Mail, Link2, Check } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import SupportCard from './SupportCard';
 import { formatDate } from '../lib/utils';
@@ -25,6 +25,17 @@ interface Article {
 export default function ArticleView({ article, onClose }: { article: Article, onClose: () => void }) {
   const { toggleBookmark, isBookmarked } = useUserPreferences();
   const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = `${window.location.origin}/article/${article.id}`;
+  const encodedUrl = encodeURIComponent(shareUrl);
+  const encodedTitle = encodeURIComponent(article.title);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const displayArticle = article;
 
@@ -79,6 +90,56 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium uppercase tracking-wider border-y border-gray-100 py-6">
             <span className="flex items-center gap-2"><User className="w-4 h-4" /> By {displayArticle.author}</span>
             <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {formatDate(displayArticle.publishedAt, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+
+          {/* Prominent Share Bar */}
+          <div className="flex flex-wrap items-center gap-4 mt-6">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Share this story</span>
+            <div className="flex items-center gap-2">
+              <a 
+                href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center hover:scale-110 transition-transform"
+                title="Share on X"
+              >
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a 
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform"
+                title="Share on Facebook"
+              >
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a 
+                href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform"
+                title="Share on WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </a>
+              <a 
+                href={`https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=${encodedTitle}&body=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-[#EA4335] text-white flex items-center justify-center hover:scale-110 transition-transform"
+                title="Share via Email"
+              >
+                <Mail className="w-4 h-4" />
+              </a>
+              <button 
+                onClick={copyToClipboard}
+                className={`w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}
+                title="Copy Link"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -189,6 +250,58 @@ export default function ArticleView({ article, onClose }: { article: Article, on
         </div>
 
         <SupportCard variant="article" />
+
+        {/* Bottom Share Bar */}
+        <div className="mt-12 pt-8 border-t border-gray-100">
+          <div className="flex flex-col items-center gap-4">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Enjoyed this story? Share it with your network</span>
+            <div className="flex items-center gap-3">
+              <a 
+                href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-black text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                title="Share on X"
+              >
+                <Twitter className="w-5 h-5" />
+              </a>
+              <a 
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                title="Share on Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+              </a>
+              <a 
+                href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                title="Share on WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5" />
+              </a>
+              <a 
+                href={`https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=&su=${encodedTitle}&body=${encodedUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-12 h-12 rounded-full bg-[#EA4335] text-white flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                title="Share via Email"
+              >
+                <Mail className="w-5 h-5" />
+              </a>
+              <button 
+                onClick={copyToClipboard}
+                className={`w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-lg ${copied ? 'bg-green-500 text-white' : 'bg-gray-800 text-white hover:bg-black'}`}
+                title="Copy Link"
+              >
+                {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <footer className="mt-20 pt-12 border-t border-gray-100">
           <div className="bg-gray-50 p-8 text-center">

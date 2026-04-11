@@ -111,10 +111,11 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                 e.stopPropagation();
                 setSharingArticle(mainArticle);
               }}
-              className="p-2 rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+              className="p-2 px-4 rounded-full bg-gray-100 text-gray-600 hover:bg-bbc-red hover:text-white transition-all flex items-center gap-2"
               title="Share Article"
             >
-              <Share2 className="w-5 h-5" />
+              <Share2 className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Share</span>
             </button>
             {onEdit && (
               <button 
@@ -177,10 +178,10 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                     e.stopPropagation();
                     setSharingArticle(article);
                   }}
-                  className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                  className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
                   title="Share Article"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-3.5 h-3.5" />
                 </button>
                 {onEdit && (
                   <button 
@@ -242,10 +243,10 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                     e.stopPropagation();
                     setSharingArticle(article);
                   }}
-                  className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors inline-flex"
+                  className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all inline-flex"
                   title="Share Article"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-3.5 h-3.5" />
                 </button>
               </div>
               <p className="text-gray-600 text-sm line-clamp-2 font-serif italic">

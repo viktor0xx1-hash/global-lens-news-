@@ -3,7 +3,8 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { formatTime } from '../lib/utils';
-import { Edit3 } from 'lucide-react';
+import { Edit3, Share2 } from 'lucide-react';
+import ShareModal from './ShareModal';
 
 interface LiveUpdate {
   id: string;
@@ -18,6 +19,7 @@ interface LiveUpdate {
 
 export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdate) => void }) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
+  const [sharingUpdate, setSharingUpdate] = useState<LiveUpdate | null>(null);
 
   useEffect(() => {
     const q = query(
@@ -60,15 +62,24 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
             <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${update.isBreaking ? 'bg-bbc-red' : 'bg-bbc-dark'}`} />
             <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
               <span>{formatTime(update.timestamp)} GMT</span>
-              {onEdit && (
+              <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => onEdit(update)}
-                  className="text-gray-300 hover:text-bbc-red transition-colors"
-                  title="Edit Update"
+                  onClick={() => setSharingUpdate(update)}
+                  className="p-1.5 rounded-full bg-white border border-gray-100 text-gray-400 hover:bg-bbc-red hover:text-white transition-all shadow-sm"
+                  title="Share Update"
                 >
-                  <Edit3 className="w-3 h-3" />
+                  <Share2 className="w-3 h-3" />
                 </button>
-              )}
+                {onEdit && (
+                  <button 
+                    onClick={() => onEdit(update)}
+                    className="text-gray-300 hover:text-bbc-red transition-colors"
+                    title="Edit Update"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
             {update.title && (
               <h4 className={`text-sm font-bold mb-1 ${update.isBreaking ? 'text-bbc-red' : 'text-bbc-dark'}`}>
@@ -185,6 +196,18 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
           </div>
         )}
       </div>
+
+      {sharingUpdate && (
+        <ShareModal 
+          isOpen={!!sharingUpdate} 
+          onClose={() => setSharingUpdate(null)} 
+          article={{
+            id: sharingUpdate.id,
+            title: sharingUpdate.title || 'Live Update',
+            summary: sharingUpdate.summary || sharingUpdate.content.substring(0, 100)
+          }} 
+        />
+      )}
     </div>
   );
 }
