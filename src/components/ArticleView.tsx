@@ -27,7 +27,8 @@ export default function ArticleView({ article, onClose }: { article: Article, on
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `${window.location.origin}/article/${article.id}`;
+  // Use query parameter instead of path to avoid 404 on SPAs without server-side routing
+  const shareUrl = `${window.location.origin}/?article=${article.id}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 

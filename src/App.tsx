@@ -6,7 +6,8 @@ import LiveUpdateFeed from './components/LiveUpdateFeed';
 import Footer from './components/Footer';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const ArticleView = lazy(() => import('./components/ArticleView'));
@@ -20,6 +21,41 @@ export default function App() {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<{ title: string, content: string } | null>(null);
+
+  useEffect(() => {
+    // Handle deep links from shared articles
+    const params = new URLSearchParams(window.location.search);
+    const articleId = params.get('article');
+    
+    if (articleId) {
+      const fetchArticle = async () => {
+        try {
+          const docRef = doc(db, 'articles', articleId);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setSelectedArticle({ id: docSnap.id, ...docSnap.data() });
+          } else {
+            // Check live updates if not found in articles
+            const updateRef = doc(db, 'live-updates', articleId);
+            const updateSnap = await getDoc(updateRef);
+            if (updateSnap.exists()) {
+              const data = updateSnap.data();
+              setSelectedArticle({ 
+                id: updateSnap.id, 
+                ...data,
+                title: data.title || 'Live Update',
+                summary: data.summary || data.content.substring(0, 100)
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching deep linked article:", error);
+        }
+      };
+      fetchArticle();
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {

@@ -15,8 +15,8 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, article }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   
-  // In a real app, this would be the actual article URL
-  const shareUrl = `${window.location.origin}/article/${article.id}`;
+  // Use query parameter instead of path to avoid 404 on SPAs without server-side routing
+  const shareUrl = `${window.location.origin}/?article=${article.id}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 
