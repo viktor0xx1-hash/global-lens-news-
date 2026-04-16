@@ -184,64 +184,66 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
               <h4 className="font-serif font-bold text-lg leading-snug group-hover:text-bbc-red transition-colors">
                 {article.title}
               </h4>
-              <div className="flex items-center justify-between mt-2">
-                <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">
+              <div className="flex items-center justify-between mt-3">
+                <div className="text-[10px] text-gray-400 uppercase tracking-widest font-bold">
                   {article.category}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 mr-2 pr-2 border-r border-gray-100">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleLike(article.id, 'articles');
+                      }}
+                      className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-400 hover:text-bbc-red'}`}
+                    >
+                      <ThumbsUp className="w-3 h-3" />
+                      <span className="text-[10px] font-bold">{article.likes || 0}</span>
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDislike(article.id, 'articles');
+                      }}
+                      className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+                    >
+                      <ThumbsDown className="w-3 h-3" />
+                      <span className="text-[10px] font-bold">{article.dislikes || 0}</span>
+                    </button>
+                  </div>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleLike(article.id, 'articles');
+                      toggleBookmark(article.id);
                     }}
-                    className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-400 hover:text-bbc-red'}`}
+                    className={`p-1.5 rounded-full transition-all flex items-center justify-center ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
+                    title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
                   >
-                    <ThumbsUp className="w-3 h-3" />
-                    <span className="text-[10px] font-bold">{article.likes || 0}</span>
+                    <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
                   </button>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleDislike(article.id, 'articles');
+                      setSharingArticle(article);
                     }}
-                    className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
+                    className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all flex items-center justify-center"
+                    title="Share Article"
                   >
-                    <ThumbsDown className="w-3 h-3" />
-                    <span className="text-[10px] font-bold">{article.dislikes || 0}</span>
+                    <Share2 className="w-3.5 h-3.5" />
                   </button>
+                  {onEdit && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(article);
+                      }}
+                      className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                      title="Edit Article"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleBookmark(article.id);
-                  }}
-                  className={`p-1.5 rounded-full transition-all flex items-center justify-center ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
-                  title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSharingArticle(article);
-                  }}
-                  className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
-                  title="Share Article"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
-                {onEdit && (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onEdit(article);
-                    }}
-                    className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
-                    title="Edit Article"
-                  >
-                    <Edit3 className="w-4 h-4" />
-                  </button>
-                )}
               </div>
             </div>
           </motion.article>

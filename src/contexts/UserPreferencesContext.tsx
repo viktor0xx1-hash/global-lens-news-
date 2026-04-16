@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, updateDoc } from 'firebase/firestore';
 import { toDate } from '../lib/utils';
@@ -193,7 +193,11 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
         localStorage.setItem('dislikes', JSON.stringify(newDislikes));
       }
     } catch (error) {
+      // Revert local state on failure
+      setLikes(likes);
+      setDislikes(dislikes);
       console.error("Vote failed:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
     }
   };
 
@@ -235,7 +239,11 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
         localStorage.setItem('dislikes', JSON.stringify(newDislikes));
       }
     } catch (error) {
+      // Revert local state on failure
+      setLikes(likes);
+      setDislikes(dislikes);
       console.error("Vote failed:", error);
+      handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
     }
   };
 

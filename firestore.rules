@@ -47,9 +47,10 @@ service cloud.firestore {
     }
 
     function isValidCounterUpdate() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'dislikes']) &&
-             (!('likes' in request.resource.data.diff(resource.data).affectedKeys()) || (math.abs(request.resource.data.likes - resource.data.likes) == 1)) &&
-             (!('dislikes' in request.resource.data.diff(resource.data).affectedKeys()) || (math.abs(request.resource.data.dislikes - resource.data.dislikes) == 1));
+      let affected = request.resource.data.diff(resource.data).affectedKeys();
+      return affected.hasOnly(['likes', 'dislikes']) &&
+             (!affected.hasAny(['likes']) || (math.abs(request.resource.data.get('likes', 0) - resource.data.get('likes', 0)) == 1)) &&
+             (!affected.hasAny(['dislikes']) || (math.abs(request.resource.data.get('dislikes', 0) - resource.data.get('dislikes', 0)) == 1));
     }
 
     // Rules
@@ -72,7 +73,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow update: if isAuthenticated() && request.auth.uid == userId && 
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks']);
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks', 'likes', 'dislikes']);
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow write: if isAdmin();
     }
