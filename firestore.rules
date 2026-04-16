@@ -46,6 +46,12 @@ service cloud.firestore {
               request.auth.uid == "Dt2QUfA9nCMCTb0NNGg1Ngkf86E3");
     }
 
+    function isValidCounterUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'dislikes']) &&
+             (!('likes' in request.resource.data.diff(resource.data).affectedKeys()) || (math.abs(request.resource.data.likes - resource.data.likes) == 1)) &&
+             (!('dislikes' in request.resource.data.diff(resource.data).affectedKeys()) || (math.abs(request.resource.data.dislikes - resource.data.dislikes) == 1));
+    }
+
     // Rules
     match /test/{docId} {
       allow read, write: if true;
@@ -53,12 +59,14 @@ service cloud.firestore {
 
     match /articles/{articleId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow update: if isValidCounterUpdate() || isAdmin();
+      allow create, delete: if isAdmin();
     }
 
     match /live-updates/{updateId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow update: if isValidCounterUpdate() || isAdmin();
+      allow create, delete: if isAdmin();
     }
 
     match /users/{userId} {

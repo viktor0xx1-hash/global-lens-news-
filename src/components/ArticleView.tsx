@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
-import { X, Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, Mail, Link2, Check } from 'lucide-react';
+import { X, Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, Mail, Link2, Check, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import SupportCard from './SupportCard';
 import { formatDate } from '../lib/utils';
@@ -20,10 +20,12 @@ interface Article {
   videoUrls?: string[];
   publishedAt: any;
   language: string;
+  likes?: number;
+  dislikes?: number;
 }
 
 export default function ArticleView({ article, onClose }: { article: Article, onClose: () => void }) {
-  const { toggleBookmark, isBookmarked } = useUserPreferences();
+  const { toggleBookmark, isBookmarked, toggleLike, toggleDislike, getVote } = useUserPreferences();
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -60,6 +62,22 @@ export default function ArticleView({ article, onClose }: { article: Article, on
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 mr-2 border-r border-gray-100 pr-4">
+              <button 
+                onClick={() => toggleLike(article.id, 'articles')}
+                className={`flex items-center gap-1.5 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-600 hover:text-bbc-red'}`}
+              >
+                <ThumbsUp className="w-4 h-4" />
+                <span className="text-xs font-bold">{article.likes || 0}</span>
+              </button>
+              <button 
+                onClick={() => toggleDislike(article.id, 'articles')}
+                className={`flex items-center gap-1.5 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                <ThumbsDown className="w-4 h-4" />
+                <span className="text-xs font-bold">{article.dislikes || 0}</span>
+              </button>
+            </div>
             <button 
               onClick={() => toggleBookmark(article.id)}
               className={`p-2 rounded-full transition-colors ${isBookmarked(article.id) ? 'text-bbc-red bg-red-50' : 'hover:bg-gray-100 text-gray-600'}`}
@@ -96,6 +114,22 @@ export default function ArticleView({ article, onClose }: { article: Article, on
           {/* Prominent Share Bar */}
           <div className="flex flex-wrap items-center gap-4 mt-6">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Share this story</span>
+            <div className="flex items-center gap-4 mr-2 border-r border-gray-100 pr-4">
+              <button 
+                onClick={() => toggleLike(article.id, 'articles')}
+                className={`flex items-center gap-1.5 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-600 hover:text-bbc-red'}`}
+              >
+                <ThumbsUp className="w-4 h-4" />
+                <span className="text-xs font-bold">{article.likes || 0}</span>
+              </button>
+              <button 
+                onClick={() => toggleDislike(article.id, 'articles')}
+                className={`flex items-center gap-1.5 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-600 hover:text-gray-900'}`}
+              >
+                <ThumbsDown className="w-4 h-4" />
+                <span className="text-xs font-bold">{article.dislikes || 0}</span>
+              </button>
+            </div>
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => toggleBookmark(article.id)}
@@ -263,6 +297,29 @@ export default function ArticleView({ article, onClose }: { article: Article, on
         <div className="mt-12 pt-8 border-t border-gray-100">
           <div className="flex flex-col items-center gap-4">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Enjoyed this story? Share it with your network</span>
+            <div className="flex items-center gap-6 mb-4 border-b border-gray-100 pb-6">
+              <button 
+                onClick={() => toggleLike(article.id, 'articles')}
+                className={`flex items-center gap-3 transition-all hover:scale-105 ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-500 hover:text-bbc-red'}`}
+              >
+                <ThumbsUp className="w-8 h-8" />
+                <div className="text-left">
+                  <div className="text-xl font-bold leading-none">{article.likes || 0}</div>
+                  <div className="text-[10px] uppercase tracking-widest font-bold opacity-60">Likes</div>
+                </div>
+              </button>
+              <div className="w-[1px] h-8 bg-gray-200 mx-2" />
+              <button 
+                onClick={() => toggleDislike(article.id, 'articles')}
+                className={`flex items-center gap-3 transition-all hover:scale-105 ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                <ThumbsDown className="w-8 h-8" />
+                <div className="text-left">
+                  <div className="text-xl font-bold leading-none">{article.dislikes || 0}</div>
+                  <div className="text-[10px] uppercase tracking-widest font-bold opacity-60">Dislikes</div>
+                </div>
+              </button>
+            </div>
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => toggleBookmark(article.id)}

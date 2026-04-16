@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List, ThumbsUp, ThumbsDown } from 'lucide-react';
 
 export default function AdminDashboard({ onClose, editItem }: { onClose: () => void, editItem?: any }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update' | 'manage' | 'settings'>('article');
@@ -629,7 +629,13 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                       <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100 hover:bg-white transition-colors group">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-sm truncate">{item.title}</h4>
-                          <p className="text-[10px] text-gray-400 uppercase">{item.category} • {new Date(item.publishedAt?.seconds * 1000).toLocaleDateString()}</p>
+                          <div className="flex items-center gap-3">
+                            <p className="text-[10px] text-gray-400 uppercase">{item.category} • {new Date(item.publishedAt?.seconds * 1000).toLocaleDateString()}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold">
+                              <span className="flex items-center gap-0.5 text-green-600"><ThumbsUp className="w-2.5 h-2.5" /> {item.likes || 0}</span>
+                              <span className="flex items-center gap-0.5 text-red-600"><ThumbsDown className="w-2.5 h-2.5" /> {item.dislikes || 0}</span>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
@@ -660,7 +666,13 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                       <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100 hover:bg-white transition-colors group">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-sm truncate">{item.title || item.content.substring(0, 50)}</h4>
-                          <p className="text-[10px] text-gray-400 uppercase">{new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
+                          <div className="flex items-center gap-3">
+                            <p className="text-[10px] text-gray-400 uppercase">{new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold">
+                              <span className="flex items-center gap-0.5 text-green-600"><ThumbsUp className="w-2.5 h-2.5" /> {item.likes || 0}</span>
+                              <span className="flex items-center gap-0.5 text-red-600"><ThumbsDown className="w-2.5 h-2.5" /> {item.dislikes || 0}</span>
+                            </div>
+                          </div>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, updateDoc } from 'firebase/firestore';
 import { toDate } from '../lib/utils';
 
 interface Notification {
@@ -18,6 +18,11 @@ interface UserPreferencesContextType {
   bookmarks: string[];
   toggleBookmark: (articleId: string) => void;
   isBookmarked: (articleId: string) => boolean;
+  likes: string[];
+  dislikes: string[];
+  toggleLike: (articleId: string, collectionName: 'articles' | 'live-updates') => Promise<void>;
+  toggleDislike: (articleId: string, collectionName: 'articles' | 'live-updates') => Promise<void>;
+  getVote: (articleId: string) => 'like' | 'dislike' | null;
   notifications: Notification[];
   unreadCount: number;
   markAsRead: (notificationId: string) => void;
@@ -28,6 +33,8 @@ const UserPreferencesContext = createContext<UserPreferencesContextType | undefi
 
 export function UserPreferencesProvider({ children }: { children: React.ReactNode }) {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [likes, setLikes] = useState<string[]>([]);
+  const [dislikes, setDislikes] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -38,20 +45,27 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     });
   }, []);
 
-  // Load bookmarks
+  // Load bookmarks and votes
   useEffect(() => {
     if (userId) {
       const unsub = onSnapshot(doc(db, 'users', userId), (docSnap) => {
         if (docSnap.exists()) {
-          setBookmarks(docSnap.data().bookmarks || []);
+          const data = docSnap.data();
+          setBookmarks(data.bookmarks || []);
+          setLikes(data.likes || []);
+          setDislikes(data.dislikes || []);
         }
       });
       return () => unsub();
     } else {
       const localBookmarks = localStorage.getItem('bookmarks');
-      if (localBookmarks) {
-        setBookmarks(JSON.parse(localBookmarks));
-      }
+      if (localBookmarks) setBookmarks(JSON.parse(localBookmarks));
+      
+      const localLikes = localStorage.getItem('likes');
+      if (localLikes) setLikes(JSON.parse(localLikes));
+      
+      const localDislikes = localStorage.getItem('dislikes');
+      if (localDislikes) setDislikes(JSON.parse(localDislikes));
     }
   }, [userId]);
 
@@ -141,6 +155,96 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
 
   const isBookmarked = (articleId: string) => bookmarks.includes(articleId);
 
+  const toggleLike = async (id: string, collectionName: 'articles' | 'live-updates') => {
+    const isLiked = likes.includes(id);
+    const isDisliked = dislikes.includes(id);
+    
+    let newLikes = [...likes];
+    let newDislikes = [...dislikes];
+    
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+    
+    const updates: any = {};
+    
+    if (isLiked) {
+      newLikes = newLikes.filter(l => l !== id);
+      updates.likes = (data.likes || 1) - 1;
+    } else {
+      newLikes.push(id);
+      updates.likes = (data.likes || 0) + 1;
+      if (isDisliked) {
+        newDislikes = newDislikes.filter(d => d !== id);
+        updates.dislikes = (data.dislikes || 1) - 1;
+      }
+    }
+    
+    setLikes(newLikes);
+    setDislikes(newDislikes);
+    
+    try {
+      await updateDoc(docRef, updates);
+      if (userId) {
+        await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
+      } else {
+        localStorage.setItem('likes', JSON.stringify(newLikes));
+        localStorage.setItem('dislikes', JSON.stringify(newDislikes));
+      }
+    } catch (error) {
+      console.error("Vote failed:", error);
+    }
+  };
+
+  const toggleDislike = async (id: string, collectionName: 'articles' | 'live-updates') => {
+    const isLiked = likes.includes(id);
+    const isDisliked = dislikes.includes(id);
+    
+    let newLikes = [...likes];
+    let newDislikes = [...dislikes];
+    
+    const docRef = doc(db, collectionName, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+    
+    const updates: any = {};
+    
+    if (isDisliked) {
+      newDislikes = newDislikes.filter(d => d !== id);
+      updates.dislikes = (data.dislikes || 1) - 1;
+    } else {
+      newDislikes.push(id);
+      updates.dislikes = (data.dislikes || 0) + 1;
+      if (isLiked) {
+        newLikes = newLikes.filter(l => l !== id);
+        updates.likes = (data.likes || 1) - 1;
+      }
+    }
+    
+    setLikes(newLikes);
+    setDislikes(newDislikes);
+    
+    try {
+      await updateDoc(docRef, updates);
+      if (userId) {
+        await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
+      } else {
+        localStorage.setItem('likes', JSON.stringify(newLikes));
+        localStorage.setItem('dislikes', JSON.stringify(newDislikes));
+      }
+    } catch (error) {
+      console.error("Vote failed:", error);
+    }
+  };
+
+  const getVote = (id: string) => {
+    if (likes.includes(id)) return 'like';
+    if (dislikes.includes(id)) return 'dislike';
+    return null;
+  };
+
   const markAsRead = (notificationId: string) => {
     const newNotifs = notifications.map(n => 
       n.id === notificationId ? { ...n, read: true } : n
@@ -162,6 +266,11 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
       bookmarks, 
       toggleBookmark, 
       isBookmarked,
+      likes,
+      dislikes,
+      toggleLike,
+      toggleDislike,
+      getVote,
       notifications,
       unreadCount,
       markAsRead,

@@ -16,7 +16,9 @@
         "videoUrls": { "type": "array", "items": { "type": "string" }, "description": "Array of video URLs for multi-video articles." },
         "publishedAt": { "type": "string", "format": "date-time", "description": "When the article was published." },
         "isBreaking": { "type": "boolean", "description": "Whether this is a breaking news story." },
-        "language": { "type": "string", "description": "The language code (e.g., en, fa, zh, ru)." }
+        "language": { "type": "string", "description": "The language code (e.g., en, fa, zh, ru)." },
+        "likes": { "type": "number", "description": "Number of likes." },
+        "dislikes": { "type": "number", "description": "Number of dislikes." }
       },
       "required": ["title", "content", "publishedAt", "language"]
     },
@@ -34,7 +36,9 @@
         "videoUrls": { "type": "array", "items": { "type": "string" }, "description": "Array of video URLs." },
         "timestamp": { "type": "string", "format": "date-time", "description": "When the update occurred." },
         "isBreaking": { "type": "boolean", "description": "Whether this is a major breaking update." },
-        "language": { "type": "string", "description": "The language code (e.g., en, fa, zh, ru)." }
+        "language": { "type": "string", "description": "The language code (e.g., en, fa, zh, ru)." },
+        "likes": { "type": "number", "description": "Number of likes." },
+        "dislikes": { "type": "number", "description": "Number of dislikes." }
       },
       "required": ["content", "timestamp", "language"]
     }
