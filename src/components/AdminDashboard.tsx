@@ -19,6 +19,45 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const [uploadPreset, setUploadPreset] = useState(localStorage.getItem('cloudinary_preset') || '');
   const [showSettings, setShowSettings] = useState(!localStorage.getItem('cloudinary_name'));
 
+  const [repairing, setRepairing] = useState(false);
+
+  const runSystemRepair = async () => {
+    if (!window.confirm("This will scan ALL content and fix any negative likes/dislikes (resetting them to 0). Proceed?")) return;
+    setRepairing(true);
+    try {
+      let fixedCount = 0;
+      
+      // Fix Articles
+      for (const article of articlesList) {
+        if ((article.likes || 0) < 0 || (article.dislikes || 0) < 0) {
+          await updateDoc(doc(db, 'articles', article.id), {
+            likes: Math.max(0, article.likes || 0),
+            dislikes: Math.max(0, article.dislikes || 0)
+          });
+          fixedCount++;
+        }
+      }
+      
+      // Fix Updates
+      for (const update of updatesList) {
+        if ((update.likes || 0) < 0 || (update.dislikes || 0) < 0) {
+          await updateDoc(doc(db, 'live-updates', update.id), {
+            likes: Math.max(0, update.likes || 0),
+            dislikes: Math.max(0, update.dislikes || 0)
+          });
+          fixedCount++;
+        }
+      }
+      
+      alert(`✅ Repair complete! Fixed ${fixedCount} corrupted posts.`);
+    } catch (err: any) {
+      console.error("Repair failed:", err);
+      alert(`❌ Repair failed: ${err.message}`);
+    } finally {
+      setRepairing(false);
+    }
+  };
+
   const saveSettings = () => {
     localStorage.setItem('cloudinary_name', cloudName);
     localStorage.setItem('cloudinary_preset', uploadPreset);
@@ -357,6 +396,8 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         } else {
           const docRef = await addDoc(collection(db, 'articles'), {
             ...article,
+            likes: 0,
+            dislikes: 0,
             publishedAt: serverTimestamp()
           });
           console.log("Article published with ID:", docRef.id);
@@ -419,6 +460,8 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         } else {
           const docRef = await addDoc(collection(db, 'live-updates'), {
             ...update,
+            likes: 0,
+            dislikes: 0,
             timestamp: serverTimestamp()
           });
           console.log("Update posted with ID:", docRef.id);
@@ -605,6 +648,23 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   </button>
                 </div>
               </div>
+              <div className="bg-red-50 p-4 rounded-lg border border-red-100">
+                <h3 className="text-red-800 font-bold mb-2 flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4" /> System Maintenance
+                </h3>
+                <p className="text-sm text-red-700 mb-4">
+                  If you see negative engagement counts (e.g. -1 likes) due to legacy bugs, run this repair tool.
+                </p>
+                <button 
+                  onClick={runSystemRepair}
+                  disabled={repairing}
+                  className="w-full bg-red-600 text-white py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {repairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
+                  {repairing ? 'Repairing...' : 'Fix Corrupted Counts'}
+                </button>
+              </div>
+
               <div className="text-xs text-gray-500 space-y-2">
                 <p className="font-bold">How to get these for free:</p>
                 <ol className="list-decimal pl-4 space-y-1">
