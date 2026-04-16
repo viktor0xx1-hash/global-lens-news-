@@ -18,11 +18,6 @@ interface UserPreferencesContextType {
   bookmarks: string[];
   toggleBookmark: (articleId: string) => void;
   isBookmarked: (articleId: string) => boolean;
-  likes: string[];
-  dislikes: string[];
-  toggleLike: (articleId: string, collectionName: 'articles' | 'live-updates') => Promise<void>;
-  toggleDislike: (articleId: string, collectionName: 'articles' | 'live-updates') => Promise<void>;
-  getVote: (articleId: string) => 'like' | 'dislike' | null;
   notifications: Notification[];
   unreadCount: number;
   markAsRead: (notificationId: string) => void;
@@ -33,8 +28,6 @@ const UserPreferencesContext = createContext<UserPreferencesContextType | undefi
 
 export function UserPreferencesProvider({ children }: { children: React.ReactNode }) {
   const [bookmarks, setBookmarks] = useState<string[]>([]);
-  const [likes, setLikes] = useState<string[]>([]);
-  const [dislikes, setDislikes] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
 
@@ -45,27 +38,19 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     });
   }, []);
 
-  // Load bookmarks and votes
+  // Load bookmarks
   useEffect(() => {
     if (userId) {
       const unsub = onSnapshot(doc(db, 'users', userId), (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setBookmarks(data.bookmarks || []);
-          setLikes(data.likes || []);
-          setDislikes(data.dislikes || []);
         }
       });
       return () => unsub();
     } else {
       const localBookmarks = localStorage.getItem('bookmarks');
       if (localBookmarks) setBookmarks(JSON.parse(localBookmarks));
-      
-      const localLikes = localStorage.getItem('likes');
-      if (localLikes) setLikes(JSON.parse(localLikes));
-      
-      const localDislikes = localStorage.getItem('dislikes');
-      if (localDislikes) setDislikes(JSON.parse(localDislikes));
     }
   }, [userId]);
 
@@ -155,98 +140,6 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
 
   const isBookmarked = (articleId: string) => bookmarks.includes(articleId);
 
-  const toggleLike = async (id: string, collectionName: 'articles' | 'live-updates') => {
-    const isLiked = likes.includes(id);
-    const isDisliked = dislikes.includes(id);
-    
-    let newLikes = [...likes];
-    let newDislikes = [...dislikes];
-    
-    const docRef = doc(db, collectionName, id);
-    const updates: any = {};
-    
-    if (isLiked) {
-      newLikes = newLikes.filter(l => l !== id);
-      updates.likes = increment(-1);
-    } else {
-      newLikes.push(id);
-      updates.likes = increment(1);
-      if (isDisliked) {
-        newDislikes = newDislikes.filter(d => d !== id);
-        updates.dislikes = increment(-1);
-      }
-    }
-    
-    const oldLikes = [...likes];
-    const oldDislikes = [...dislikes];
-    setLikes(newLikes);
-    setDislikes(newDislikes);
-    
-    try {
-      if (userId) {
-        await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
-      } else {
-        localStorage.setItem('likes', JSON.stringify(newLikes));
-        localStorage.setItem('dislikes', JSON.stringify(newDislikes));
-      }
-      await updateDoc(docRef, updates);
-    } catch (error) {
-      setLikes(oldLikes);
-      setDislikes(oldDislikes);
-      console.error("Vote failed:", error);
-      handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
-    }
-  };
-
-  const toggleDislike = async (id: string, collectionName: 'articles' | 'live-updates') => {
-    const isLiked = likes.includes(id);
-    const isDisliked = dislikes.includes(id);
-    
-    let newLikes = [...likes];
-    let newDislikes = [...dislikes];
-    
-    const docRef = doc(db, collectionName, id);
-    const updates: any = {};
-    
-    if (isDisliked) {
-      newDislikes = newDislikes.filter(d => d !== id);
-      updates.dislikes = increment(-1);
-    } else {
-      newDislikes.push(id);
-      updates.dislikes = increment(1);
-      if (isLiked) {
-        newLikes = newLikes.filter(l => l !== id);
-        updates.likes = increment(-1);
-      }
-    }
-    
-    const oldLikes = [...likes];
-    const oldDislikes = [...dislikes];
-    setLikes(newLikes);
-    setDislikes(newDislikes);
-    
-    try {
-      if (userId) {
-        await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
-      } else {
-        localStorage.setItem('likes', JSON.stringify(newLikes));
-        localStorage.setItem('dislikes', JSON.stringify(newDislikes));
-      }
-      await updateDoc(docRef, updates);
-    } catch (error) {
-      setLikes(oldLikes);
-      setDislikes(oldDislikes);
-      console.error("Vote failed:", error);
-      handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
-    }
-  };
-
-  const getVote = (id: string) => {
-    if (likes.includes(id)) return 'like';
-    if (dislikes.includes(id)) return 'dislike';
-    return null;
-  };
-
   const markAsRead = (notificationId: string) => {
     const newNotifs = notifications.map(n => 
       n.id === notificationId ? { ...n, read: true } : n
@@ -268,11 +161,6 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
       bookmarks, 
       toggleBookmark, 
       isBookmarked,
-      likes,
-      dislikes,
-      toggleLike,
-      toggleDislike,
-      getVote,
       notifications,
       unreadCount,
       markAsRead,

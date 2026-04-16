@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
 
 export default function AdminDashboard({ onClose, editItem }: { onClose: () => void, editItem?: any }) {
   const [activeTab, setActiveTab] = useState<'article' | 'update' | 'manage' | 'settings'>('article');
@@ -18,45 +18,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const [cloudName, setCloudName] = useState(localStorage.getItem('cloudinary_name') || '');
   const [uploadPreset, setUploadPreset] = useState(localStorage.getItem('cloudinary_preset') || '');
   const [showSettings, setShowSettings] = useState(!localStorage.getItem('cloudinary_name'));
-
-  const [repairing, setRepairing] = useState(false);
-
-  const runSystemRepair = async () => {
-    if (!window.confirm("This will scan ALL content and fix any negative likes/dislikes (resetting them to 0). Proceed?")) return;
-    setRepairing(true);
-    try {
-      let fixedCount = 0;
-      
-      // Fix Articles
-      for (const article of articlesList) {
-        if ((article.likes || 0) < 0 || (article.dislikes || 0) < 0) {
-          await updateDoc(doc(db, 'articles', article.id), {
-            likes: Math.max(0, article.likes || 0),
-            dislikes: Math.max(0, article.dislikes || 0)
-          });
-          fixedCount++;
-        }
-      }
-      
-      // Fix Updates
-      for (const update of updatesList) {
-        if ((update.likes || 0) < 0 || (update.dislikes || 0) < 0) {
-          await updateDoc(doc(db, 'live-updates', update.id), {
-            likes: Math.max(0, update.likes || 0),
-            dislikes: Math.max(0, update.dislikes || 0)
-          });
-          fixedCount++;
-        }
-      }
-      
-      alert(`✅ Repair complete! Fixed ${fixedCount} corrupted posts.`);
-    } catch (err: any) {
-      console.error("Repair failed:", err);
-      alert(`❌ Repair failed: ${err.message}`);
-    } finally {
-      setRepairing(false);
-    }
-  };
 
   const saveSettings = () => {
     localStorage.setItem('cloudinary_name', cloudName);
@@ -396,8 +357,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         } else {
           const docRef = await addDoc(collection(db, 'articles'), {
             ...article,
-            likes: 0,
-            dislikes: 0,
             publishedAt: serverTimestamp()
           });
           console.log("Article published with ID:", docRef.id);
@@ -460,8 +419,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         } else {
           const docRef = await addDoc(collection(db, 'live-updates'), {
             ...update,
-            likes: 0,
-            dislikes: 0,
             timestamp: serverTimestamp()
           });
           console.log("Update posted with ID:", docRef.id);
@@ -648,23 +605,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   </button>
                 </div>
               </div>
-              <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-                <h3 className="text-red-800 font-bold mb-2 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4" /> System Maintenance
-                </h3>
-                <p className="text-sm text-red-700 mb-4">
-                  If you see negative engagement counts (e.g. -1 likes) due to legacy bugs, run this repair tool.
-                </p>
-                <button 
-                  onClick={runSystemRepair}
-                  disabled={repairing}
-                  className="w-full bg-red-600 text-white py-2 rounded font-bold uppercase tracking-widest text-xs hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {repairing ? <Loader2 className="w-4 h-4 animate-spin" /> : <AlertCircle className="w-4 h-4" />}
-                  {repairing ? 'Repairing...' : 'Fix Corrupted Counts'}
-                </button>
-              </div>
-
               <div className="text-xs text-gray-500 space-y-2">
                 <p className="font-bold">How to get these for free:</p>
                 <ol className="list-decimal pl-4 space-y-1">
@@ -691,10 +631,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                           <h4 className="font-bold text-sm truncate">{item.title}</h4>
                           <div className="flex items-center gap-3">
                             <p className="text-[10px] text-gray-400 uppercase">{item.category} • {new Date(item.publishedAt?.seconds * 1000).toLocaleDateString()}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold">
-                              <span className="flex items-center gap-0.5 text-green-600"><ThumbsUp className="w-2.5 h-2.5" /> {item.likes || 0}</span>
-                              <span className="flex items-center gap-0.5 text-red-600"><ThumbsDown className="w-2.5 h-2.5" /> {item.dislikes || 0}</span>
-                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -728,10 +664,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                           <h4 className="font-bold text-sm truncate">{item.title || item.content.substring(0, 50)}</h4>
                           <div className="flex items-center gap-3">
                             <p className="text-[10px] text-gray-400 uppercase">{new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold">
-                              <span className="flex items-center gap-0.5 text-green-600"><ThumbsUp className="w-2.5 h-2.5" /> {item.likes || 0}</span>
-                              <span className="flex items-center gap-0.5 text-red-600"><ThumbsDown className="w-2.5 h-2.5" /> {item.dislikes || 0}</span>
-                            </div>
                           </div>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

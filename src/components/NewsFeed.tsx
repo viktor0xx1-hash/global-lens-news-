@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { Clock, User, Tag, Bookmark, Edit3, Share2, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Clock, User, Tag, Bookmark, Edit3, Share2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
 import ShareModal from './ShareModal';
@@ -27,7 +27,7 @@ interface Article {
 export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (article: Article) => void, onEdit?: (article: Article) => void }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
-  const { toggleBookmark, isBookmarked, toggleLike, toggleDislike, getVote } = useUserPreferences();
+  const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
     const q = query(
@@ -108,28 +108,6 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
             >
               <Bookmark className={`w-5 h-5 ${isBookmarked(mainArticle.id) ? 'fill-current' : ''}`} />
             </button>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleLike(mainArticle.id, 'articles');
-                }}
-                className={`flex items-center gap-1.5 transition-colors ${getVote(mainArticle.id) === 'like' ? 'text-bbc-red' : 'text-gray-500 hover:text-bbc-red'}`}
-              >
-                <ThumbsUp className="w-4 h-4" />
-                <span className="text-xs font-bold">{mainArticle.likes || 0}</span>
-              </button>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleDislike(mainArticle.id, 'articles');
-                }}
-                className={`flex items-center gap-1.5 transition-colors ${getVote(mainArticle.id) === 'dislike' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
-              >
-                <ThumbsDown className="w-4 h-4" />
-                <span className="text-xs font-bold">{mainArticle.dislikes || 0}</span>
-              </button>
-            </div>
             <button 
               onClick={(e) => {
                 e.stopPropagation();
@@ -189,28 +167,6 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                   {article.category}
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-3 mr-2 pr-2 border-r border-gray-100">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleLike(article.id, 'articles');
-                      }}
-                      className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-400 hover:text-bbc-red'}`}
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                      <span className="text-[10px] font-bold">{article.likes || 0}</span>
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleDislike(article.id, 'articles');
-                      }}
-                      className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
-                    >
-                      <ThumbsDown className="w-3 h-3" />
-                      <span className="text-[10px] font-bold">{article.dislikes || 0}</span>
-                    </button>
-                  </div>
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
@@ -277,26 +233,6 @@ export default function NewsFeed({ onArticleClick, onEdit }: { onArticleClick: (
                 {article.title}
               </h4>
               <div className="flex items-center gap-3 mb-2">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleLike(article.id, 'articles');
-                  }}
-                  className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'like' ? 'text-bbc-red' : 'text-gray-400 hover:text-bbc-red'}`}
-                >
-                  <ThumbsUp className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold">{article.likes || 0}</span>
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleDislike(article.id, 'articles');
-                  }}
-                  className={`flex items-center gap-1 transition-colors ${getVote(article.id) === 'dislike' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
-                >
-                  <ThumbsDown className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold">{article.dislikes || 0}</span>
-                </button>
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();

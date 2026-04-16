@@ -46,17 +46,6 @@ service cloud.firestore {
               request.auth.uid == "Dt2QUfA9nCMCTb0NNGg1Ngkf86E3");
     }
 
-    function isValidCounterUpdate() {
-      let affected = request.resource.data.diff(resource.data).affectedKeys();
-      let likesDiff = request.resource.data.get('likes', 0) - resource.data.get('likes', 0);
-      let dislikesDiff = request.resource.data.get('dislikes', 0) - resource.data.get('dislikes', 0);
-      return affected.hasOnly(['likes', 'dislikes']) &&
-             (!affected.hasAny(['likes']) || (likesDiff == 1 || likesDiff == -1)) &&
-             (!affected.hasAny(['dislikes']) || (dislikesDiff == 1 || dislikesDiff == -1)) &&
-             request.resource.data.get('likes', 0) >= 0 &&
-             request.resource.data.get('dislikes', 0) >= 0;
-    }
-
     // Rules
     match /test/{docId} {
       allow read, write: if true;
@@ -64,20 +53,18 @@ service cloud.firestore {
 
     match /articles/{articleId} {
       allow read: if true;
-      allow update: if isValidCounterUpdate() || isAdmin();
-      allow create, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /live-updates/{updateId} {
       allow read: if true;
-      allow update: if isValidCounterUpdate() || isAdmin();
-      allow create, delete: if isAdmin();
+      allow create, update, delete: if isAdmin();
     }
 
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow update: if isAuthenticated() && request.auth.uid == userId && 
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks', 'likes', 'dislikes']);
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['bookmarks']);
       allow create: if isAuthenticated() && request.auth.uid == userId;
       allow write: if isAdmin();
     }

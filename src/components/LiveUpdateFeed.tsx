@@ -3,7 +3,7 @@ import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { formatTime } from '../lib/utils';
-import { Edit3, Share2, Bookmark, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Edit3, Share2, Bookmark } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import ShareModal from './ShareModal';
 
@@ -23,7 +23,7 @@ interface LiveUpdate {
 export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdate) => void }) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
   const [sharingUpdate, setSharingUpdate] = useState<LiveUpdate | null>(null);
-  const { toggleBookmark, isBookmarked, toggleLike, toggleDislike, getVote } = useUserPreferences();
+  const { toggleBookmark, isBookmarked } = useUserPreferences();
 
   useEffect(() => {
     const q = query(
@@ -67,22 +67,6 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
             <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
               <span>{formatTime(update.timestamp)} GMT</span>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 mr-2">
-                  <button 
-                    onClick={() => toggleLike(update.id, 'live-updates')}
-                    className={`flex items-center gap-1 transition-colors ${getVote(update.id) === 'like' ? 'text-bbc-red' : 'text-gray-400 hover:text-bbc-red'}`}
-                  >
-                    <ThumbsUp className="w-3 h-3" />
-                    <span className="text-[10px] font-bold">{update.likes || 0}</span>
-                  </button>
-                  <button 
-                    onClick={() => toggleDislike(update.id, 'live-updates')}
-                    className={`flex items-center gap-1 transition-colors ${getVote(update.id) === 'dislike' ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'}`}
-                  >
-                    <ThumbsDown className="w-3 h-3" />
-                    <span className="text-[10px] font-bold">{update.dislikes || 0}</span>
-                  </button>
-                </div>
                 <button 
                   onClick={() => toggleBookmark(update.id)}
                   className={`p-1.5 rounded-full transition-all shadow-sm ${isBookmarked(update.id) ? 'bg-red-50 text-bbc-red' : 'bg-white border border-gray-100 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
