@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, limit, updateDoc, increment } from 'firebase/firestore';
 import { toDate } from '../lib/utils';
 
 interface Notification {
@@ -163,39 +163,36 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     let newDislikes = [...dislikes];
     
     const docRef = doc(db, collectionName, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return;
-    const data = docSnap.data();
-    
     const updates: any = {};
     
     if (isLiked) {
       newLikes = newLikes.filter(l => l !== id);
-      updates.likes = (data.likes || 1) - 1;
+      updates.likes = increment(-1);
     } else {
       newLikes.push(id);
-      updates.likes = (data.likes || 0) + 1;
+      updates.likes = increment(1);
       if (isDisliked) {
         newDislikes = newDislikes.filter(d => d !== id);
-        updates.dislikes = (data.dislikes || 1) - 1;
+        updates.dislikes = increment(-1);
       }
     }
     
+    const oldLikes = [...likes];
+    const oldDislikes = [...dislikes];
     setLikes(newLikes);
     setDislikes(newDislikes);
     
     try {
-      await updateDoc(docRef, updates);
       if (userId) {
         await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
       } else {
         localStorage.setItem('likes', JSON.stringify(newLikes));
         localStorage.setItem('dislikes', JSON.stringify(newDislikes));
       }
+      await updateDoc(docRef, updates);
     } catch (error) {
-      // Revert local state on failure
-      setLikes(likes);
-      setDislikes(dislikes);
+      setLikes(oldLikes);
+      setDislikes(oldDislikes);
       console.error("Vote failed:", error);
       handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
     }
@@ -209,39 +206,36 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     let newDislikes = [...dislikes];
     
     const docRef = doc(db, collectionName, id);
-    const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return;
-    const data = docSnap.data();
-    
     const updates: any = {};
     
     if (isDisliked) {
       newDislikes = newDislikes.filter(d => d !== id);
-      updates.dislikes = (data.dislikes || 1) - 1;
+      updates.dislikes = increment(-1);
     } else {
       newDislikes.push(id);
-      updates.dislikes = (data.dislikes || 0) + 1;
+      updates.dislikes = increment(1);
       if (isLiked) {
         newLikes = newLikes.filter(l => l !== id);
-        updates.likes = (data.likes || 1) - 1;
+        updates.likes = increment(-1);
       }
     }
     
+    const oldLikes = [...likes];
+    const oldDislikes = [...dislikes];
     setLikes(newLikes);
     setDislikes(newDislikes);
     
     try {
-      await updateDoc(docRef, updates);
       if (userId) {
         await setDoc(doc(db, 'users', userId), { likes: newLikes, dislikes: newDislikes }, { merge: true });
       } else {
         localStorage.setItem('likes', JSON.stringify(newLikes));
         localStorage.setItem('dislikes', JSON.stringify(newDislikes));
       }
+      await updateDoc(docRef, updates);
     } catch (error) {
-      // Revert local state on failure
-      setLikes(likes);
-      setDislikes(dislikes);
+      setLikes(oldLikes);
+      setDislikes(oldDislikes);
       console.error("Vote failed:", error);
       handleFirestoreError(error, OperationType.UPDATE, `${collectionName}/${id}`);
     }

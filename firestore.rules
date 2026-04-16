@@ -42,15 +42,17 @@ service cloud.firestore {
 
     function isAdmin() {
       return request.auth != null && 
-             (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\.com") ||
+             (request.auth.token.email == "viktor0xx1@gmail.com" ||
               request.auth.uid == "Dt2QUfA9nCMCTb0NNGg1Ngkf86E3");
     }
 
     function isValidCounterUpdate() {
       let affected = request.resource.data.diff(resource.data).affectedKeys();
+      let likesDiff = request.resource.data.get('likes', 0) - resource.data.get('likes', 0);
+      let dislikesDiff = request.resource.data.get('dislikes', 0) - resource.data.get('dislikes', 0);
       return affected.hasOnly(['likes', 'dislikes']) &&
-             (!affected.hasAny(['likes']) || (math.abs(request.resource.data.get('likes', 0) - resource.data.get('likes', 0)) == 1)) &&
-             (!affected.hasAny(['dislikes']) || (math.abs(request.resource.data.get('dislikes', 0) - resource.data.get('dislikes', 0)) == 1));
+             (!affected.hasAny(['likes']) || (likesDiff == 1 || likesDiff == -1)) &&
+             (!affected.hasAny(['dislikes']) || (dislikesDiff == 1 || dislikesDiff == -1));
     }
 
     // Rules
