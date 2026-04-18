@@ -27,7 +27,7 @@ const Skeleton = ({ className }: { className: string }) => (
   <div className={`bg-gray-200 animate-pulse rounded-sm ${className}`} />
 );
 
-export default function NewsFeed({ onEdit }: { onEdit?: (article: Article) => void }) {
+export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Article) => void, limitCount?: number }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -38,15 +38,16 @@ export default function NewsFeed({ onEdit }: { onEdit?: (article: Article) => vo
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchLimit = limitCount || 10;
     const q = query(
       collection(db, 'articles'), 
       orderBy('publishedAt', 'desc'),
-      limit(10)
+      limit(fetchLimit)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
       setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-      if (snapshot.size < 10) setHasMore(false);
+      if (snapshot.size < fetchLimit || limitCount) setHasMore(false);
       setLoading(false);
     }, (error) => {
       console.error("NewsFeed fetch error:", error);

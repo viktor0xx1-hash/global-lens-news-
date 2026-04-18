@@ -92,7 +92,7 @@ Most web browsers allow some control of most cookies through the browser setting
 Our mission is to deliver accurate, unbiased, and deep-dive journalism that helps our readers navigate the complexities of the modern world. In an era of rapid information and frequent disinformation, we strive to be a beacon of truth and clarity.
 
 ## What We Cover
-- **Geopolitics:** In-depth analysis of international relations and global power shifts.
+- **World News/Geopolitics:** In-depth analysis of international relations and global power shifts.
 - **Security:** Updates on global security trends, conflicts, and defense strategies.
 - **Economy:** Insights into the global economic landscape and its impact on geopolitics.
 - **Live Updates:** Real-time reporting on breaking news events as they happen.

@@ -47,7 +47,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
             </Link>
             <nav className="hidden md:flex items-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
               <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
-                Geopolitics
+                World News/Geopolitics
               </Link>
               <Link to="/category/economy" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
                 Economy
@@ -160,7 +160,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
       <div className="md:hidden border-t border-gray-50 px-4 py-3 overflow-x-auto scrollbar-hide bg-white/80 backdrop-blur-sm">
         <nav className="flex items-center gap-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap">
           <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            Geopolitics
+            World News/Geopolitics
           </Link>
           <Link to="/category/economy" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
             Economy

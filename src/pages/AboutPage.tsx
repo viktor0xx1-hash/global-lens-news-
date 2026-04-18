@@ -36,7 +36,7 @@ export default function AboutPage() {
           {
             icon: <Target className="w-8 h-8 text-bbc-red" />,
             title: "Focused Analysis",
-            desc: "Expert coverage on Geopolitics, Africa, and Global Economic shifts."
+            desc: "Expert coverage on World News, Geopolitics, Africa, and Global Economic shifts."
           },
           {
             icon: <Zap className="w-8 h-8 text-bbc-red" />,

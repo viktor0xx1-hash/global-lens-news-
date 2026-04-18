@@ -120,7 +120,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: editItem.summary || '',
           content: editItem.content || '',
           author: editItem.author || '',
-          category: editItem.category || 'Geopolitics',
+          category: editItem.category || 'World News/Geopolitics',
           imageUrls: editItem.imageUrls || [],
           videoUrls: editItem.videoUrls || [],
           isBreaking: editItem.isBreaking || false
@@ -209,7 +209,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: '',
           content: '',
           author: '',
-          category: 'Geopolitics',
+          category: 'World News/Geopolitics',
           imageUrls: [],
           videoUrls: [],
           isBreaking: false
@@ -234,7 +234,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     summary: '',
     content: '',
     author: '',
-    category: 'Geopolitics',
+    category: 'World News/Geopolitics',
     imageUrls: [] as string[],
     videoUrls: [] as string[],
     isBreaking: false
@@ -413,7 +413,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: '',
           content: '',
           author: '',
-          category: 'Geopolitics',
+          category: 'World News/Geopolitics',
           imageUrls: [],
           videoUrls: [],
           isBreaking: false
@@ -767,7 +767,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   value={article.category}
                   onChange={e => setArticle({...article, category: e.target.value})}
                 >
-                  <option>Geopolitics</option>
+                  <option>World News/Geopolitics</option>
                   <option>Economy</option>
                   <option>Diplomacy</option>
                   <option>Africa</option>

@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
-import { ShareModal } from '../components';
+import { ShareModal, LiveUpdateFeed } from '../components';
 
 interface Article {
   id: string;
@@ -39,7 +39,9 @@ export default function CategoryPage() {
     const articlesRef = collection(db, 'articles');
     
     if (categoryId && categoryId !== 'all') {
-      const categoryLabel = categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
+      const categoryLabel = categoryId === 'geopolitics' 
+        ? 'World News/Geopolitics' 
+        : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
       q = query(
         articlesRef, 
         where('category', '==', categoryLabel),
@@ -76,7 +78,9 @@ export default function CategoryPage() {
       const articlesRef = collection(db, 'articles');
       
       if (categoryId && categoryId !== 'all') {
-        const categoryLabel = categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
+        const categoryLabel = categoryId === 'geopolitics' 
+          ? 'World News/Geopolitics' 
+          : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
         nextQuery = query(
           articlesRef,
           where('category', '==', categoryLabel),
@@ -105,7 +109,9 @@ export default function CategoryPage() {
     }
   };
 
-  const categoryName = categoryId === 'all' ? 'Full Archive' : (categoryId?.charAt(0).toUpperCase() + categoryId?.slice(1));
+  const categoryName = categoryId === 'all' 
+    ? 'Full Archive' 
+    : (categoryId === 'geopolitics' ? 'World News/Geopolitics' : (categoryId?.charAt(0).toUpperCase() + categoryId?.slice(1)));
 
   if (loading) {
     return (
@@ -145,85 +151,95 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
-        {articles.map((article, idx) => (
-          <motion.article 
-            key={article.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            onClick={() => {
-              const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-              navigate(`/article/${article.id}/${slug}`);
-            }}
-            className="group cursor-pointer border-b border-gray-50 pb-8 last:border-0"
-          >
-            <div className="aspect-video overflow-hidden bg-gray-100 mb-4 rounded-sm shadow-sm">
-              <img 
-                src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
-                alt={article.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <h4 className="font-serif font-bold text-xl mb-3 group-hover:text-bbc-red transition-colors leading-snug">
-              {article.title}
-            </h4>
-            <div className="flex items-center gap-4 mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-               <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {formatDate(article.publishedAt)}</span>
-               {categoryId === 'all' && (
-                 <span className="text-bbc-red">#{article.category}</span>
-               )}
-            </div>
-            <p className="text-gray-600 text-sm line-clamp-3 font-serif italic mb-6">
-              {article.summary}
-            </p>
-            <div className="flex items-center gap-3 mt-auto">
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleBookmark(article.id);
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className={categoryId === 'geopolitics' ? "lg:col-span-8" : "lg:col-span-12"}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 ${categoryId === 'geopolitics' ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-12`}>
+            {articles.map((article, idx) => (
+              <motion.article 
+                key={article.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                onClick={() => {
+                  const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                  navigate(`/article/${article.id}/${slug}`);
                 }}
-                className={`p-2 rounded-full transition-all ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
-                title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
+                className="group cursor-pointer border-b border-gray-50 pb-8 last:border-0"
               >
-                <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
-              </button>
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSharingArticle(article);
-                }}
-                className="p-2 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
-                title="Share Article"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-              </button>
-              <span className="ml-auto text-bbc-red opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest">
-                Read Report <ChevronRight className="w-3 h-3" />
-              </span>
+                <div className="aspect-video overflow-hidden bg-gray-100 mb-4 rounded-sm shadow-sm">
+                  <img 
+                    src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
+                    alt={article.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+                <h4 className="font-serif font-bold text-xl mb-3 group-hover:text-bbc-red transition-colors leading-snug">
+                  {article.title}
+                </h4>
+                <div className="flex items-center gap-4 mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                   <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {formatDate(article.publishedAt)}</span>
+                   {categoryId === 'all' && (
+                     <span className="text-bbc-red">#{article.category}</span>
+                   )}
+                </div>
+                <p className="text-gray-600 text-sm line-clamp-3 font-serif italic mb-6">
+                  {article.summary}
+                </p>
+                <div className="flex items-center gap-3 mt-auto">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleBookmark(article.id);
+                    }}
+                    className={`p-2 rounded-full transition-all ${isBookmarked(article.id) ? 'bg-red-50 text-bbc-red' : 'bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white'}`}
+                    title={isBookmarked(article.id) ? "Remove Bookmark" : "Bookmark Article"}
+                  >
+                    <Bookmark className={`w-3.5 h-3.5 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSharingArticle(article);
+                    }}
+                    className="p-2 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
+                    title="Share Article"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="ml-auto text-bbc-red opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest">
+                    Read Report <ChevronRight className="w-3 h-3" />
+                  </span>
+                </div>
+              </motion.article>
+            ))}
+          </div>
+
+          {articles.length === 0 && (
+            <div className="py-24 text-center">
+              <p className="text-gray-400 italic">No reports available in this intelligence sector currently.</p>
             </div>
-          </motion.article>
-        ))}
+          )}
+
+          {hasMore && (
+            <div className="mt-16 text-center border-t border-gray-100 pt-12">
+              <button 
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-12 py-4 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest hover:bg-bbc-red transition-all flex items-center gap-2 mx-auto disabled:opacity-50"
+              >
+                {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Retrieve More Intelligence'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {categoryId === 'geopolitics' && (
+          <aside className="lg:col-span-4 space-y-8">
+            <LiveUpdateFeed />
+          </aside>
+        )}
       </div>
-
-      {articles.length === 0 && (
-        <div className="py-24 text-center">
-          <p className="text-gray-400 italic">No reports available in this intelligence sector currently.</p>
-        </div>
-      )}
-
-      {hasMore && (
-        <div className="mt-16 text-center border-t border-gray-100 pt-12">
-          <button 
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="px-12 py-4 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest hover:bg-bbc-red transition-all flex items-center gap-2 mx-auto disabled:opacity-50"
-          >
-            {loadingMore ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Retrieve More Intelligence'}
-          </button>
-        </div>
-      )}
 
       {sharingArticle && (
         <ShareModal 
