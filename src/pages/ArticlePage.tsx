@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import { ArticleView, LiveUpdateFeed } from '../components';
+import { ArticleView } from '../components';
 import { motion } from 'motion/react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 
@@ -24,19 +24,6 @@ export default function ArticlePage() {
         
         if (docSnap.exists()) {
           setArticle({ id: docSnap.id, ...docSnap.data() });
-        } else {
-          // Try live-updates collection
-          const updateRef = doc(db, 'live-updates', id);
-          const updateSnap = await getDoc(updateRef);
-          if (updateSnap.exists()) {
-            const data = updateSnap.data();
-            setArticle({ 
-              id: updateSnap.id, 
-              ...data,
-              title: data.title || 'Live Update',
-              summary: data.summary || data.content.substring(0, 100)
-            });
-          }
         }
       } catch (error) {
         console.error("Error fetching article:", error);
@@ -74,21 +61,14 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-      <div className="lg:col-span-8">
-        <button 
-          onClick={() => navigate('/')}
-          className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-bbc-red transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to Intelligence Feed
-        </button>
-        <ArticleView article={article} />
-      </div>
-      <aside className="lg:col-span-4 space-y-8">
-        <div className="sticky top-24">
-          <LiveUpdateFeed />
-        </div>
-      </aside>
+    <div className="max-w-4xl mx-auto">
+      <button 
+        onClick={() => navigate('/')}
+        className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-bbc-red transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Intelligence Feed
+      </button>
+      <ArticleView article={article} />
     </div>
   );
 }

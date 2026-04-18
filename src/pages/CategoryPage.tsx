@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
-import { ShareModal, LiveUpdateFeed } from '../components';
+import { ShareModal } from '../components';
 
 interface Article {
   id: string;
@@ -42,9 +42,14 @@ export default function CategoryPage() {
       const categoryLabel = categoryId === 'geopolitics' 
         ? 'World News/Geopolitics' 
         : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
+      
+      const categoryFilter = categoryId === 'geopolitics'
+        ? where('category', 'in', ['World News/Geopolitics', 'Geopolitics'])
+        : where('category', '==', categoryLabel);
+
       q = query(
         articlesRef, 
-        where('category', '==', categoryLabel),
+        categoryFilter,
         orderBy('publishedAt', 'desc'),
         limit(12)
       );
@@ -81,9 +86,14 @@ export default function CategoryPage() {
         const categoryLabel = categoryId === 'geopolitics' 
           ? 'World News/Geopolitics' 
           : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
+        
+        const categoryFilter = categoryId === 'geopolitics'
+          ? where('category', 'in', ['World News/Geopolitics', 'Geopolitics'])
+          : where('category', '==', categoryLabel);
+
         nextQuery = query(
           articlesRef,
-          where('category', '==', categoryLabel),
+          categoryFilter,
           orderBy('publishedAt', 'desc'),
           startAfter(lastDoc),
           limit(12)
@@ -152,8 +162,8 @@ export default function CategoryPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        <div className={categoryId === 'geopolitics' ? "lg:col-span-8" : "lg:col-span-12"}>
-          <div className={`grid grid-cols-1 md:grid-cols-2 ${categoryId === 'geopolitics' ? 'lg:grid-cols-2' : 'lg:grid-cols-3'} gap-12`}>
+        <div className="lg:col-span-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
             {articles.map((article, idx) => (
               <motion.article 
                 key={article.id}
@@ -233,12 +243,6 @@ export default function CategoryPage() {
             </div>
           )}
         </div>
-
-        {categoryId === 'geopolitics' && (
-          <aside className="lg:col-span-4 space-y-8">
-            <LiveUpdateFeed />
-          </aside>
-        )}
       </div>
 
       {sharingArticle && (

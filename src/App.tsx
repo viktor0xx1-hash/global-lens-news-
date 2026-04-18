@@ -50,7 +50,6 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col font-sans text-bbc-dark selection:bg-bbc-red selection:text-white">
       <Header onAdminClick={() => setShowAdmin(true)} onBookmarksClick={() => setShowBookmarks(true)} />
-      <BreakingNewsTicker />
     
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 w-full">
         <Suspense fallback={

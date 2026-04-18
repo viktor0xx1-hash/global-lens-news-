@@ -5,7 +5,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
 
 export default function AdminDashboard({ onClose, editItem }: { onClose: () => void, editItem?: any }) {
-  const [activeTab, setActiveTab] = useState<'article' | 'update' | 'manage' | 'settings'>('article');
+  const [activeTab, setActiveTab] = useState<'article' | 'manage' | 'settings'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [version] = useState('v3.0-CLOUDINARY-STORAGE'); 
@@ -25,7 +25,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     setShowSettings(false);
     alert("Storage settings saved! You can now use the Gallery Upload.");
   };
-  const [stats, setStats] = useState({ articles: 0, updates: 0 });
+  const [stats, setStats] = useState({ articles: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [copyStatus, setCopyStatus] = useState<'idle' | 'uid' | 'rules'>('idle');
@@ -88,8 +88,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
       setDbStatus('error');
     });
     const unsubUpdates = onSnapshot(collection(db, 'live-updates'), snap => {
-      console.log("[Admin] Updates count update:", snap.size);
-      setStats(prev => ({ ...prev, updates: snap.size }));
       setUpdatesList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, err => {
       console.error("[Admin] Updates stats error:", err);
@@ -180,7 +178,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   }, [editItem]);
   const articleImageInputRef = useRef<HTMLInputElement>(null);
   const articleVideoInputRef = useRef<HTMLInputElement>(null);
-  const updateMediaInputRef = useRef<HTMLInputElement>(null);
   const [urlInput, setUrlInput] = useState('');
   const [urlType, setUrlType] = useState<'image' | 'video'>('image');
 
@@ -342,7 +339,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     setUrlInput('');
   };
 
-  const removeFile = (url: string, type: 'image' | 'video', target: 'article' | 'update') => {
+  const removeFile = (url: string, type: 'image' | 'video') => {
     // Remove from previews too
     setPreviews(prev => {
       const p = prev.find(item => item.remoteUrl === url || item.localUrl === url);
@@ -350,13 +347,8 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
       return prev.filter(item => item.remoteUrl !== url && item.localUrl !== url);
     });
 
-    if (target === 'article') {
-      if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
-      else setArticle(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
-    } else {
-      if (type === 'image') setUpdate(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
-      else setUpdate(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
-    }
+    if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: prev.imageUrls.filter(u => u !== url) }));
+    else setArticle(prev => ({ ...prev, videoUrls: prev.videoUrls.filter(u => u !== url) }));
   };
 
   const handleDelete = async () => {
@@ -446,58 +438,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     }
   };
 
-  const handlePostUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
-
-    const finalize = async () => {
-      try {
-        console.log("Attempting to post live update...", update);
-        if (editingId) {
-          await updateDoc(doc(db, 'live-updates', editingId), {
-            ...update,
-            updatedAt: serverTimestamp()
-          });
-          console.log("Update updated with ID:", editingId);
-        } else {
-          const docRef = await addDoc(collection(db, 'live-updates'), {
-            ...update,
-            timestamp: serverTimestamp()
-          });
-          console.log("Update posted with ID:", docRef.id);
-        }
-        setSuccess(true);
-        setEditingId(null);
-        setUpdate({ title: '', summary: '', content: '', videoUrls: [], imageUrls: [], isBreaking: false });
-        setPreviews([]);
-        setLoading(false);
-        setTimeout(() => {
-          setSuccess(false);
-          onClose();
-        }, 2000);
-      } catch (error: any) {
-        console.error("Update failed deep error:", error);
-        alert(`❌ POST FAILED!\n\nReason: ${error.message}\n\nYour Email: ${user?.email}\nVerified: ${user?.emailVerified}`);
-        setLoading(false);
-      }
-    };
-
-    if (uploading) {
-      let attempts = 0;
-      const check = setInterval(() => {
-        attempts++;
-        const stillUploading = previewsRef.current.some(p => p.status === 'uploading');
-        if (!stillUploading || attempts > 20) { // 10 second timeout
-          clearInterval(check);
-          finalize();
-        }
-      }, 500);
-    } else {
-      finalize();
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -536,25 +476,19 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
 
         <div className="flex border-b border-gray-100">
           <button 
-            onClick={() => switchTab('article')}
+            onClick={() => setActiveTab('article')}
             className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'article' ? 'bg-bbc-red text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <FileText className="w-4 h-4" /> {editingId ? 'Edit Article' : 'New Article'}
           </button>
           <button 
-            onClick={() => switchTab('update')}
-            className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'update' ? 'bg-bbc-dark text-white' : 'text-gray-400 hover:bg-gray-50'}`}
-          >
-            <Zap className="w-4 h-4" /> {editingId ? 'Edit Update' : 'Live Update'}
-          </button>
-          <button 
-            onClick={() => switchTab('manage')}
+            onClick={() => setActiveTab('manage')}
             className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'manage' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
-            <List className="w-4 h-4" /> Manage
+            <List className="w-4 h-4" /> Manage Feed
           </button>
           <button 
-            onClick={() => switchTab('settings')}
+            onClick={() => setActiveTab('settings')}
             className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'settings' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <Settings className="w-4 h-4" />
@@ -673,32 +607,49 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                 )}
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 border-b pb-2">Live Updates</h3>
+               <div className="space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 border-b pb-2 flex items-center justify-between">
+                  <span>Legacy Live Updates</span>
+                  <span className="text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded">Migrate these to Articles</span>
+                </h3>
                 {updatesList.length === 0 ? (
-                  <p className="text-sm text-gray-400 italic">No updates found.</p>
+                  <p className="text-sm text-gray-400 italic">No legacy updates found.</p>
                 ) : (
                   <div className="space-y-2">
                     {updatesList.map(item => (
                       <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-100 hover:bg-white transition-colors group">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm truncate">{item.title || item.content.substring(0, 50)}</h4>
+                          <h4 className="font-bold text-sm truncate uppercase">{item.title || item.content.substring(0, 50)}</h4>
                           <div className="flex items-center gap-3">
-                            <p className="text-[10px] text-gray-400 uppercase">{new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
+                            <p className="text-[10px] text-gray-400 uppercase">Legacy Update • {new Date(item.timestamp?.seconds * 1000).toLocaleTimeString()}</p>
                           </div>
                         </div>
                         <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => {
-                              setEditingId(item.id);
-                              setUpdate(item);
-                              setPreviews((item.imageUrls || []).map((url: string) => ({ id: Math.random().toString(), localUrl: url, remoteUrl: url, type: 'image', status: 'done', progress: 100 })));
-                              setActiveTab('update');
+                              if (window.confirm("Convert this update into a regular Article? you will be able to set a category and publish it officially.")) {
+                                setArticle({
+                                  title: item.title || '',
+                                  summary: item.summary || '',
+                                  content: item.content || '',
+                                  author: 'Global Lens Staff',
+                                  category: 'World News/Geopolitics',
+                                  imageUrls: item.imageUrls || [],
+                                  videoUrls: item.videoUrls || [],
+                                  isBreaking: item.isBreaking || false
+                                });
+                                setPreviews([
+                                  ...(item.imageUrls || []).map((url: string) => ({ id: Math.random().toString(), localUrl: url, remoteUrl: url, type: 'image' as const, status: 'done' as const, progress: 100 })),
+                                  ...(item.videoUrls || []).map((url: string) => ({ id: Math.random().toString(), localUrl: url, remoteUrl: url, type: 'video' as const, status: 'done' as const, progress: 100 }))
+                                ]);
+                                setActiveTab('article');
+                                // We don't delete yet, allow user to publish article first
+                              }
                             }}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="Edit"
+                            className="p-2 text-bbc-red hover:bg-red-50 rounded transition-colors flex items-center gap-1 text-[10px] font-bold uppercase"
+                            title="Convert to Article"
                           >
-                            <Edit3 className="w-4 h-4" />
+                            <FileText className="w-4 h-4" /> Convert
                           </button>
                           <button 
                             onClick={() => handleDeleteDoc(item.id, 'live-updates')}
@@ -716,17 +667,14 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {(activeTab === 'article' || activeTab === 'update') && !showSettings && (
+          {(activeTab === 'article') && !showSettings && (
             <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Database className="w-3 h-3" /> Database Status:
               </div>
               <div className="flex gap-3">
-                <span className="text-[10px] font-mono text-bbc-red bg-red-50 px-2 py-0.5 rounded">
-                  Articles: {stats.articles}
-                </span>
-                <span className="text-[10px] font-mono text-bbc-dark bg-gray-200 px-2 py-0.5 rounded">
-                  Updates: {stats.updates}
+                <span className="text-[10px] font-mono text-bbc-red bg-red-50 px-2 py-0.5 rounded uppercase tracking-tighter">
+                  Intelligence Base: {stats.articles} Reports
                 </span>
               </div>
             </div>
@@ -801,7 +749,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                           )}
                           <button 
                             type="button"
-                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'image', 'article')}
+                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'image')}
                             className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />
@@ -851,7 +799,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                           )}
                           <button 
                             type="button"
-                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'video', 'article')}
+                            onClick={() => removeFile(preview.remoteUrl || preview.localUrl, 'video')}
                             className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />

@@ -1,8 +1,6 @@
 export { default as Header } from './Header';
 export { default as Footer } from './Footer';
 export { default as NewsFeed } from './NewsFeed';
-export { default as LiveUpdateFeed } from './LiveUpdateFeed';
-export { default as BreakingNewsTicker } from './BreakingNewsTicker';
 export { default as AdminDashboard } from './AdminDashboard';
 export { default as ArticleView } from './ArticleView';
 export { default as PolicyView } from './PolicyView';
