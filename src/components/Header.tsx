@@ -155,6 +155,27 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
           </div>
         </div>
       </div>
+      
+      {/* Mobile Navigation - Horizontal Scroll */}
+      <div className="md:hidden border-t border-gray-50 px-4 py-3 overflow-x-auto scrollbar-hide bg-white/80 backdrop-blur-sm">
+        <nav className="flex items-center gap-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap">
+          <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
+            Geopolitics
+          </Link>
+          <Link to="/category/economy" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
+            Economy
+          </Link>
+          <Link to="/category/diplomacy" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
+            Diplomacy
+          </Link>
+          <Link to="/category/africa" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
+            Africa
+          </Link>
+          <Link to="/about" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
+            About
+          </Link>
+        </nav>
+      </div>
     </header>
   );
 }
