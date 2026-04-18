@@ -120,8 +120,8 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
   }
 
   const mainArticle = articles[0];
-  const sideArticles = articles.slice(1, 4);
-  const restArticles = articles.slice(4);
+  const sideArticles = articles.slice(1, 6);
+  const restArticles = articles.slice(6);
 
   const handleArticleClick = (article: Article) => {
     // Navigate to article page with slug-like URL
@@ -131,14 +131,14 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-8">
       {/* Main Feature */}
       <div className="lg:col-span-8">
         <motion.article 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => handleArticleClick(mainArticle)}
-          className="group cursor-pointer border-b border-gray-100 lg:border-none pb-6 lg:pb-0 mb-6 lg:mb-0"
+          className="group cursor-pointer border-b border-gray-100 lg:border-none pb-2 lg:pb-0 mb-2 lg:mb-0"
         >
           <div className="relative aspect-[16/10] md:aspect-video overflow-hidden bg-gray-100 mb-3 rounded-sm shadow-sm">
             <img 

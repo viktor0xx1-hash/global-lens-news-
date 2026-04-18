@@ -5,7 +5,7 @@ export default function HomePage({ isAdmin, handleEdit }: { isAdmin: boolean, ha
     <div className="max-w-4xl mx-auto">
       <NewsFeed 
         onEdit={isAdmin ? handleEdit : undefined} 
-        limitCount={3}
+        limitCount={6}
       />
       <div className="mt-12 pt-8 border-t border-gray-100 text-center">
         <h3 className="text-xl font-serif font-bold text-bbc-dark mb-4 italic">Expansive Intelligence Deep Dives</h3>
