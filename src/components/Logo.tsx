@@ -6,7 +6,7 @@ export default function Logo({ className = "" }: { className?: string }) {
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative w-16 h-16 flex items-center justify-center group"
+        className="relative w-12 h-12 md:w-16 md:h-16 flex items-center justify-center group"
       >
         {/* Outer Lens Barrel */}
         <div className="absolute inset-0 bg-gradient-to-b from-[#444] to-[#111] rounded-full shadow-2xl border-[1px] border-black/50" />
@@ -29,7 +29,7 @@ export default function Logo({ className = "" }: { className?: string }) {
         </div>
 
         {/* Inner Lens Glass Area */}
-        <div className="absolute inset-[14px] rounded-full bg-black shadow-inner overflow-hidden flex items-center justify-center border-[2px] border-[#333]">
+        <div className="absolute inset-[10px] md:inset-[14px] rounded-full bg-black shadow-inner overflow-hidden flex items-center justify-center border-[2px] border-[#333]">
           {/* Globe Background (Silver/Gray) */}
           <div className="absolute inset-0 bg-gradient-to-br from-[#888] via-[#ccc] to-[#444]" />
           
@@ -68,9 +68,9 @@ export default function Logo({ className = "" }: { className?: string }) {
       </motion.div>
       
       <div className="flex flex-col leading-none">
-        <span className="text-xl md:text-2xl font-black tracking-tighter uppercase font-sans text-bbc-dark">Global</span>
+        <span className="text-lg md:text-2xl font-black tracking-tighter uppercase font-sans text-bbc-dark">Global</span>
         <div className="flex items-center gap-1">
-          <span className="text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase font-sans text-bbc-red">Lens</span>
+          <span className="text-[9px] md:text-sm font-bold tracking-[0.3em] uppercase font-sans text-bbc-red">Lens</span>
           <div className="h-[2px] flex-1 bg-bbc-red/30" />
         </div>
       </div>

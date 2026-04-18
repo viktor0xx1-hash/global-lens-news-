@@ -65,29 +65,29 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
   }
 
   return (
-    <div className="bg-gray-50 p-6 border border-gray-200">
-      <div className="flex items-center justify-between mb-6">
+    <div className="bg-gray-50 p-4 md:p-6 border border-gray-200 rounded-sm">
+      <div className="flex items-center justify-between mb-4 md:mb-6">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 bg-bbc-red rounded-full animate-ping" />
-          <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-bbc-red">
-            Live Updates
+          <h3 className="text-[10px] md:text-sm font-bold uppercase tracking-[0.2em] text-bbc-red">
+            Live Intelligence
           </h3>
         </div>
       </div>
       
-      <div className="space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200">
+      <div className="space-y-6 md:space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200">
         {updates.map((update, idx) => (
           <motion.div 
             key={update.id}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: idx * 0.05 }}
-            className="relative pl-8"
+            className="relative pl-6 md:pl-8"
           >
             <div className={`absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 border-white shadow-sm ${update.isBreaking ? 'bg-bbc-red' : 'bg-bbc-dark'}`} />
-            <div className="text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
+            <div className="text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider flex items-center justify-between">
               <span>{formatTime(update.timestamp)} GMT</span>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 md:gap-3">
                 <button 
                   onClick={() => toggleBookmark(update.id)}
                   className={`p-1.5 rounded-full transition-all shadow-sm ${isBookmarked(update.id) ? 'bg-red-50 text-bbc-red' : 'bg-white border border-gray-100 text-gray-400 hover:bg-bbc-red hover:text-white'}`}

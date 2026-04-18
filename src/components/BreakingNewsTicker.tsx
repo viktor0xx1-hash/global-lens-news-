@@ -50,19 +50,19 @@ export default function BreakingNewsTicker() {
   if (displayUpdates.length === 0) return null;
 
   return (
-    <div className="bg-bbc-red text-white py-2 overflow-hidden relative">
+    <div className="bg-bbc-red text-white py-1.5 md:py-2 overflow-hidden relative shadow-sm">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-4">
-        <div className="flex items-center gap-2 font-bold uppercase tracking-tighter text-sm whitespace-nowrap border-r border-white/30 pr-4">
-          <Zap className="w-4 h-4 fill-white animate-pulse" /> Breaking
+        <div className="flex items-center gap-2 font-bold uppercase tracking-tighter text-xs md:text-sm whitespace-nowrap border-r border-white/30 pr-4">
+          <Zap className="w-3 h-3 md:w-4 md:h-4 fill-white animate-pulse" /> Breaking
         </div>
-        <div className="relative flex-1 h-6">
+        <div className="relative flex-1 h-5 md:h-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
-              className="absolute inset-0 text-sm font-medium truncate"
+              className="absolute inset-0 text-[11px] md:text-sm font-medium truncate"
             >
               {displayUpdates[currentIndex].summary || displayUpdates[currentIndex].content}
             </motion.div>
