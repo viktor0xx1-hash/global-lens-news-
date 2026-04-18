@@ -48,12 +48,6 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
                 <li><Link to="/category/all" className="hover:text-bbc-red transition-colors">Archive</Link></li>
                 <li><button onClick={() => onPolicyClick('Privacy Policy', POLICIES.PRIVACY)} className="hover:text-bbc-red transition-colors">Privacy</button></li>
                 <li><button onClick={() => onPolicyClick('Terms of Service', POLICIES.TERMS)} className="hover:text-bbc-red transition-colors">Terms</button></li>
-              </ul>
-            </div>
-
-            <div className="md:mt-8">
-              <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-bbc-dark mb-6">Internal</h4>
-              <ul className="space-y-3 text-xs font-bold uppercase tracking-widest text-gray-700">
                 <li className="pt-2">
                   {loading ? (
                     <span className="text-gray-300 italic lowercase font-normal">loading...</span>
