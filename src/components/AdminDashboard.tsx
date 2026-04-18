@@ -769,7 +769,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                 >
                   <option>Geopolitics</option>
                   <option>Economy</option>
-                  <option>Conflict</option>
                   <option>Diplomacy</option>
                   <option>Africa</option>
                 </select>

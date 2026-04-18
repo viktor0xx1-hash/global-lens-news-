@@ -46,17 +46,17 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
               <Logo />
             </Link>
             <nav className="hidden md:flex items-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
-              <Link to="/category/world" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
-                World
-              </Link>
               <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
                 Geopolitics
               </Link>
+              <Link to="/category/economy" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                Economy
+              </Link>
+              <Link to="/category/diplomacy" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                Diplomacy
+              </Link>
               <Link to="/category/africa" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
                 Africa
-              </Link>
-              <Link to="/category/all" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
-                Archive
               </Link>
               <Link to="/about" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
                 About

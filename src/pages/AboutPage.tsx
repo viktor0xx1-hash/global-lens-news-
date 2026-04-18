@@ -74,13 +74,14 @@ export default function AboutPage() {
               Originally launched as a specialized briefing for geopolitical analysts, 
               <strong> Global Lens News</strong> has evolved into a comprehensive digital 
               platform dedicated to highlighting the critical intersections of economy, 
-              war, diplomacy, and technology.
+              war, diplomacy, and technology on a global scale.
             </p>
             <p>
-              Our unique focus on <strong>Africa Updates</strong> allows us to bring 
-              attention to one of the most dynamic and complex regions in the world, 
-              providing a voice and a platform for developments that large western 
-              conglomerates often overlook.
+              While we maintain a deep expertise in <strong>Africa Updates</strong>, 
+              providing a voice and a platform for developments in one of the most 
+              dynamic and complex regions in the world, our lens covers <strong>Geopolitical 
+              World Events</strong> wherever they unfold—from the emerging markets to 
+              established global powers.
             </p>
           </div>
         </section>
