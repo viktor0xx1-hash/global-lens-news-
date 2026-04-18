@@ -152,7 +152,7 @@ export default function CategoryPage() {
           >
             <ArrowLeft className="w-4 h-4" /> Home
           </button>
-          <h1 className="text-4xl font-serif font-bold text-bbc-dark flex items-center gap-3">
+          <h1 className="text-2xl md:text-4xl font-serif font-bold text-bbc-dark flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <span className="text-bbc-red italic">{categoryName}</span> Intelligence
           </h1>
           <p className="text-gray-500 mt-2 font-serif italic pb-2">

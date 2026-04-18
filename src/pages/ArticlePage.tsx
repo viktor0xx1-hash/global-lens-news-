@@ -61,7 +61,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <button 
         onClick={() => navigate('/')}
         className="mb-6 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-bbc-red transition-colors"

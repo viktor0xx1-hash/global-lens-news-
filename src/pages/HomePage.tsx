@@ -1,8 +1,8 @@
-import { NewsFeed, LiveUpdateFeed } from '../components';
+import { NewsFeed } from '../components';
 
 export default function HomePage({ isAdmin, handleEdit }: { isAdmin: boolean, handleEdit: (item: any) => void }) {
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <NewsFeed 
         onEdit={isAdmin ? handleEdit : undefined} 
         limitCount={6}
