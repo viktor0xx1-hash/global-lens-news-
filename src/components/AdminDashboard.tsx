@@ -185,6 +185,50 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const [urlType, setUrlType] = useState<'image' | 'video'>('image');
 
   // Article Form
+  const handleDeleteDoc = async (id: string, type: 'articles' | 'live-updates') => {
+    if (!window.confirm(`Are you sure you want to delete this ${type === 'articles' ? 'article' : 'update'}? This action cannot be undone.`)) return;
+    
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, type, id));
+      alert("Successfully deleted.");
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete. Check console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const switchTab = (tab: typeof activeTab) => {
+    if (editingId && tab !== activeTab) {
+      if (window.confirm("Switching tabs will discard your current edits. Continue?")) {
+        setEditingId(null);
+        setArticle({
+          title: '',
+          summary: '',
+          content: '',
+          author: '',
+          category: 'Geopolitics',
+          imageUrls: [],
+          videoUrls: [],
+          isBreaking: false
+        });
+        setUpdate({
+          title: '',
+          summary: '',
+          content: '',
+          isBreaking: false,
+          imageUrls: [],
+          videoUrls: []
+        });
+        setPreviews([]);
+        setActiveTab(tab);
+      }
+    } else {
+      setActiveTab(tab);
+    }
+  };
   const [article, setArticle] = useState({
     title: '',
     summary: '',
@@ -457,91 +501,60 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-white w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-bbc-dark text-white">
-          <div className="flex flex-col">
-            <h2 className="text-xl font-bold uppercase tracking-widest flex items-center gap-2">
+        <div className="p-4 md:p-6 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-bbc-dark text-white gap-4">
+          <div className="flex flex-col min-w-0 w-full">
+            <h2 className="text-lg md:text-xl font-bold uppercase tracking-widest flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-bbc-red" /> {editingId ? 'Edit Content' : 'Editor Control'}
-              <span className="text-[10px] font-mono bg-bbc-red px-1 rounded ml-2">{version}</span>
             </h2>
-            <div className="flex flex-wrap items-center gap-3 mt-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-2 opacity-80">
               <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
-                <span className="text-[10px] text-gray-400 font-mono">
-                  {user ? user.email : 'NOT LOGGED IN'}
+                <div className={`w-1.5 h-1.5 rounded-full ${user ? 'bg-green-500' : 'bg-red-500'}`} />
+                <span className="text-[9px] text-gray-300 font-mono truncate max-w-[120px]">
+                  {user ? user.email : 'OFFLINE'}
                 </span>
               </div>
-              
-              {user && (
-                <>
-                  <div className="w-px h-3 bg-gray-700" />
-                  <button 
-                    onClick={() => copyToClipboard(user.uid, 'uid')}
-                    className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-white font-mono transition-colors"
-                    title="Click to copy UID"
-                  >
-                    UID: {user.uid.substring(0, 6)}... 
-                    {copyStatus === 'uid' ? <span className="text-green-500">Copied!</span> : <FileText className="w-3 h-3" />}
-                  </button>
-                </>
-              )}
-
-              <div className="w-px h-3 bg-gray-700" />
+              <div className="hidden md:block w-px h-3 bg-gray-700" />
               <div className="flex items-center gap-1.5">
-                <Database className={`w-3 h-3 ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500 animate-pulse'}`} />
-                <span className={`text-[10px] font-mono uppercase tracking-wider ${dbStatus === 'connected' ? 'text-green-500' : dbStatus === 'error' ? 'text-red-500' : 'text-gray-500'}`}>
-                  {dbStatus === 'connected' ? 'Online' : dbStatus === 'error' ? 'Locked' : 'Sync...'}
+                <Database className={`w-3 h-3 ${dbStatus === 'connected' ? 'text-green-500' : 'text-gray-500'}`} />
+                <span className="text-[9px] font-mono uppercase tracking-wider">
+                  {dbStatus === 'connected' ? 'DB Active' : 'Checking...'}
                 </span>
-              </div>
-              
-              <div className="w-px h-3 bg-gray-700" />
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={runConnectionTest}
-                  disabled={testStatus === 'testing'}
-                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider transition-colors ${
-                    testStatus === 'success' ? 'bg-green-500/20 text-green-500' : 
-                    testStatus === 'error' ? 'bg-red-500/20 text-red-500' : 
-                    'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                  }`}
-                >
-                  {testStatus === 'testing' ? '...' : testStatus === 'success' ? 'OK' : testStatus === 'error' ? 'Fail' : 'Test'}
-                </button>
-                
-                <button 
-                  onClick={() => copyToClipboard(`rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isAdmin() {\n      return request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}");\n    }\n    match /test/{docId} { allow read, write: if true; }\n    match /articles/{articleId} { allow read: if true; allow write: if isAdmin(); }\n    match /live-updates/{updateId} { allow read: if true; allow write: if isAdmin(); }\n    match /users/{userId} { allow read: if request.auth != null && (request.auth.uid == userId || isAdmin()); allow write: if isAdmin(); }\n  }\n}`, 'rules')}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider bg-bbc-red/20 text-bbc-red hover:bg-bbc-red/30 transition-colors"
-                >
-                  {copyStatus === 'rules' ? 'Rules Copied!' : 'Copy Rules'}
-                </button>
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="hover:text-bbc-red transition-colors">
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center justify-between w-full md:w-auto gap-4">
+            <div className="flex gap-2">
+              <button onClick={() => copyToClipboard(`rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isAdmin() { return request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}"); }\n    match /{collection=**} { allow read: if true; allow write: if isAdmin(); }\n  }\n}`, 'rules')} className="text-[9px] px-2 py-1 bg-bbc-red/20 text-bbc-red border border-bbc-red/30 rounded uppercase font-bold">
+                {copyStatus === 'rules' ? 'Rules Copied' : 'Rules'}
+              </button>
+            </div>
+            <button onClick={onClose} className="hover:text-bbc-red transition-colors p-1">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
 
         <div className="flex border-b border-gray-100">
           <button 
-            onClick={() => setActiveTab('article')}
+            onClick={() => switchTab('article')}
             className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'article' ? 'bg-bbc-red text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <FileText className="w-4 h-4" /> {editingId ? 'Edit Article' : 'New Article'}
           </button>
           <button 
-            onClick={() => setActiveTab('update')}
+            onClick={() => switchTab('update')}
             className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'update' ? 'bg-bbc-dark text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <Zap className="w-4 h-4" /> {editingId ? 'Edit Update' : 'Live Update'}
           </button>
           <button 
-            onClick={() => setActiveTab('manage')}
+            onClick={() => switchTab('manage')}
             className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'manage' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <List className="w-4 h-4" /> Manage
           </button>
           <button 
-            onClick={() => setActiveTab('settings')}
+            onClick={() => switchTab('settings')}
             className={`px-6 py-4 text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${activeTab === 'settings' ? 'bg-gray-800 text-white' : 'text-gray-400 hover:bg-gray-50'}`}
           >
             <Settings className="w-4 h-4" />
@@ -642,8 +655,16 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                               setActiveTab('article');
                             }}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteDoc(item.id, 'articles')}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -675,8 +696,16 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                               setActiveTab('update');
                             }}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteDoc(item.id, 'live-updates')}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>

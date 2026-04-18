@@ -16,12 +16,15 @@ interface LiveUpdate {
   imageUrls?: string[];
   timestamp: any;
   isBreaking?: boolean;
-  likes?: number;
-  dislikes?: number;
 }
+
+const Skeleton = ({ className }: { className: string }) => (
+  <div className={`bg-gray-200 animate-pulse rounded-sm ${className}`} />
+);
 
 export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdate) => void }) {
   const [updates, setUpdates] = useState<LiveUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sharingUpdate, setSharingUpdate] = useState<LiveUpdate | null>(null);
   const { toggleBookmark, isBookmarked } = useUserPreferences();
 
@@ -32,16 +35,34 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
       limit(20)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      console.log(`[LiveUpdateFeed] Received ${snapshot.size} updates from ${db.app.options.projectId}/${(db as any)._databaseId || 'default'}`);
       setUpdates(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as LiveUpdate[]);
+      setLoading(false);
     }, (error) => {
       console.error("LiveUpdateFeed fetch error:", error);
       handleFirestoreError(error, OperationType.LIST, 'live-updates');
+      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const displayUpdates = updates;
+  if (loading) {
+    return (
+      <div className="bg-white p-6 border border-gray-100 space-y-8">
+        <div className="flex items-center gap-2 mb-6">
+          <div className="w-2 h-2 bg-bbc-red rounded-full" />
+          <div className="h-4 w-24 bg-gray-100 animate-pulse" />
+        </div>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="relative pl-8 space-y-2">
+            <div className="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-gray-100" />
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gray-50 p-6 border border-gray-200">
@@ -55,7 +76,7 @@ export default function LiveUpdateFeed({ onEdit }: { onEdit?: (update: LiveUpdat
       </div>
       
       <div className="space-y-8 relative before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200">
-        {displayUpdates.map((update, idx) => (
+        {updates.map((update, idx) => (
           <motion.div 
             key={update.id}
             initial={{ opacity: 0, x: -10 }}

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { auth, signIn, signInPopup, logOut } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
-import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut } from 'lucide-react';
+import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut, Info } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatTime } from '../lib/utils';
+import { Link } from 'react-router-dom';
 
 export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClick: () => void, onBookmarksClick: () => void }) {
   const [user, setUser] = useState<User | null>(null);
@@ -28,7 +29,6 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
     });
 
     return onAuthStateChanged(auth, (u) => {
-      console.log("Auth state changed:", u ? u.email : "Logged out");
       setUser(u);
       setLoading(false);
     });
@@ -42,17 +42,25 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center gap-8">
-            <Logo />
-            <nav className="hidden md:flex items-center gap-6 text-sm font-medium uppercase tracking-wider text-gray-600">
-              <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <Globe className="w-4 h-4" /> World
-              </a>
-              <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <TrendingUp className="w-4 h-4" /> Geopolitics
-              </a>
-              <a href="#" className="hover:text-bbc-red transition-colors flex items-center gap-1">
-                <Globe className="w-4 h-4" /> Africa
-              </a>
+            <Link to="/">
+              <Logo />
+            </Link>
+            <nav className="hidden md:flex items-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-500">
+              <Link to="/category/world" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                World
+              </Link>
+              <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                Geopolitics
+              </Link>
+              <Link to="/category/africa" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                Africa
+              </Link>
+              <Link to="/category/all" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                Archive
+              </Link>
+              <Link to="/about" className="hover:text-bbc-red transition-colors flex items-center gap-1.5 py-2 border-b-2 border-transparent hover:border-bbc-red">
+                About
+              </Link>
             </nav>
           </div>
 

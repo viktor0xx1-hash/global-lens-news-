@@ -1,61 +1,23 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
-import Header from './components/Header';
-import BreakingNewsTicker from './components/BreakingNewsTicker';
-import NewsFeed from './components/NewsFeed';
-import LiveUpdateFeed from './components/LiveUpdateFeed';
-import Footer from './components/Footer';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Header, BreakingNewsTicker, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary } from './components';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
-import { auth, db } from './firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from './firebase';
 
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const ArticleView = lazy(() => import('./components/ArticleView'));
-const PolicyView = lazy(() => import('./components/PolicyView'));
-const BookmarksView = lazy(() => import('./components/BookmarksView'));
+// Pages
+import HomePage from './pages/HomePage';
+import ArticlePage from './pages/ArticlePage';
+import CategoryPage from './pages/CategoryPage';
+import AboutPage from './pages/AboutPage';
 
-export default function App() {
+function AppContent() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<{ title: string, content: string } | null>(null);
-
-  useEffect(() => {
-    // Handle deep links from shared articles
-    const params = new URLSearchParams(window.location.search);
-    const articleId = params.get('article');
-    
-    if (articleId) {
-      const fetchArticle = async () => {
-        try {
-          const docRef = doc(db, 'articles', articleId);
-          const docSnap = await getDoc(docRef);
-          
-          if (docSnap.exists()) {
-            setSelectedArticle({ id: docSnap.id, ...docSnap.data() });
-          } else {
-            // Check live updates if not found in articles
-            const updateRef = doc(db, 'live-updates', articleId);
-            const updateSnap = await getDoc(updateRef);
-            if (updateSnap.exists()) {
-              const data = updateSnap.data();
-              setSelectedArticle({ 
-                id: updateSnap.id, 
-                ...data,
-                title: data.title || 'Live Update',
-                summary: data.summary || data.content.substring(0, 100)
-              });
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching deep linked article:", error);
-        }
-      };
-      fetchArticle();
-    }
-  }, []);
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -70,6 +32,11 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Reset scroll on navigation
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   const handleEdit = (item: any) => {
     setEditingItem(item);
     setShowAdmin(true);
@@ -81,23 +48,24 @@ export default function App() {
   };
 
   return (
-    <UserPreferencesProvider>
-      <div className="min-h-screen flex flex-col">
-        <Header onAdminClick={() => setShowAdmin(true)} onBookmarksClick={() => setShowBookmarks(true)} />
-        <BreakingNewsTicker />
-      
+    <div className="min-h-screen flex flex-col font-sans text-bbc-dark selection:bg-bbc-red selection:text-white">
+      <Header onAdminClick={() => setShowAdmin(true)} onBookmarksClick={() => setShowBookmarks(true)} />
+      <BreakingNewsTicker />
+    
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Main Content Area */}
-          <div className="lg:col-span-8">
-            <NewsFeed onArticleClick={setSelectedArticle} onEdit={isAdmin ? handleEdit : undefined} />
+        <Suspense fallback={
+          <div className="flex flex-col items-center justify-center py-32 text-gray-400">
+            <div className="w-8 h-8 border-2 border-bbc-red border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-[10px] font-bold uppercase tracking-widest">Loading Intelligence...</p>
           </div>
-
-          {/* Sidebar Area */}
-          <aside className="lg:col-span-4 space-y-8">
-            <LiveUpdateFeed onEdit={isAdmin ? handleEdit : undefined} />
-          </aside>
-        </div>
+        }>
+          <Routes>
+            <Route path="/" element={<HomePage isAdmin={isAdmin} handleEdit={handleEdit} />} />
+            <Route path="/article/:id/:slug" element={<ArticlePage />} />
+            <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/about" element={<AboutPage />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <Footer onPolicyClick={(title, content) => setSelectedPolicy({ title, content })} onAdminClick={() => setShowAdmin(true)} />
@@ -108,18 +76,24 @@ export default function App() {
           {showBookmarks && (
             <BookmarksView 
               onClose={() => setShowBookmarks(false)} 
-              onArticleClick={(article) => {
-                setSelectedArticle(article);
-                setShowBookmarks(false);
-              }} 
             />
           )}
         </AnimatePresence>
-        {selectedArticle && <ArticleView article={selectedArticle} onClose={() => setSelectedArticle(null)} />}
         {selectedPolicy && <PolicyView title={selectedPolicy.title} content={selectedPolicy.content} onClose={() => setSelectedPolicy(null)} />}
       </Suspense>
     </div>
-    </UserPreferencesProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <BrowserRouter>
+        <UserPreferencesProvider>
+          <AppContent />
+        </UserPreferencesProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

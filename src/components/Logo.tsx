@@ -68,9 +68,9 @@ export default function Logo({ className = "" }: { className?: string }) {
       </motion.div>
       
       <div className="flex flex-col leading-none">
-        <span className="text-2xl font-black tracking-tighter uppercase font-sans text-bbc-dark">Global</span>
+        <span className="text-xl md:text-2xl font-black tracking-tighter uppercase font-sans text-bbc-dark">Global</span>
         <div className="flex items-center gap-1">
-          <span className="text-sm font-bold tracking-[0.3em] uppercase font-sans text-bbc-red">Lens</span>
+          <span className="text-[10px] md:text-sm font-bold tracking-[0.3em] uppercase font-sans text-bbc-red">Lens</span>
           <div className="h-[2px] flex-1 bg-bbc-red/30" />
         </div>
       </div>

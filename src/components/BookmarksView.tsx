@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { db, handleFirestoreError, OperationType } from '../firebase';
+import { db } from '../firebase';
 import { collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { X, Bookmark, Clock, Tag } from 'lucide-react';
+import { X, Bookmark } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
+import { useNavigate } from 'react-router-dom';
 
 interface BookmarkedItem {
   id: string;
@@ -18,10 +19,19 @@ interface BookmarkedItem {
   type: 'article' | 'update';
 }
 
-export default function BookmarksView({ onClose, onArticleClick }: { onClose: () => void, onArticleClick: (article: any) => void }) {
+export default function BookmarksView({ onClose }: { onClose: () => void }) {
   const [bookmarkedItems, setBookmarkedItems] = useState<BookmarkedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { bookmarks, toggleBookmark } = useUserPreferences();
+  const navigate = useNavigate();
+
+  const handleArticleClick = (item: BookmarkedItem) => {
+    if (item.type === 'article') {
+      const slug = (item.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      navigate(`/article/${item.id}/${slug}`);
+      onClose();
+    }
+  };
 
   useEffect(() => {
     const fetchBookmarks = async () => {
@@ -115,11 +125,7 @@ export default function BookmarksView({ onClose, onArticleClick }: { onClose: ()
               <div 
                 key={item.id}
                 className="group cursor-pointer flex gap-4"
-                onClick={() => {
-                  if (item.type === 'article') {
-                    onArticleClick(item);
-                  }
-                }}
+                onClick={() => handleArticleClick(item)}
               >
                 <div className="w-20 h-20 flex-shrink-0 overflow-hidden bg-gray-100 rounded">
                   <img 
