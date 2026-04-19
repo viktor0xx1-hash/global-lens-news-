@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Header, BreakingNewsTicker, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary } from './components';
+import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary } from './components';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { auth } from './firebase';

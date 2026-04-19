@@ -44,7 +44,7 @@ export default function CategoryPage() {
         : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
       
       const categoryFilter = categoryId === 'geopolitics'
-        ? where('category', 'in', ['World News/Geopolitics', 'Geopolitics'])
+        ? where('category', 'in', ['World News/ Geopolitics', 'World News/Geopolitics', 'Geopolitics'])
         : where('category', '==', categoryLabel);
 
       q = query(
@@ -88,7 +88,7 @@ export default function CategoryPage() {
           : (categoryId.charAt(0).toUpperCase() + categoryId.slice(1));
         
         const categoryFilter = categoryId === 'geopolitics'
-          ? where('category', 'in', ['World News/Geopolitics', 'Geopolitics'])
+          ? where('category', 'in', ['World News/ Geopolitics', 'World News/Geopolitics', 'Geopolitics'])
           : where('category', '==', categoryLabel);
 
         nextQuery = query(

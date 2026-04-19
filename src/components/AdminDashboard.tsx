@@ -118,7 +118,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: editItem.summary || '',
           content: editItem.content || '',
           author: editItem.author || '',
-          category: editItem.category || 'World News/Geopolitics',
+          category: editItem.category || 'World News/ Geopolitics',
           imageUrls: editItem.imageUrls || [],
           videoUrls: editItem.videoUrls || [],
           isBreaking: editItem.isBreaking || false
@@ -144,35 +144,8 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         ];
         setPreviews(existingPreviews);
       } else {
-        // It's a live update
-        setActiveTab('update');
-        setUpdate({
-          title: editItem.title || '',
-          summary: editItem.summary || '',
-          content: editItem.content || '',
-          imageUrls: editItem.imageUrls || [],
-          videoUrls: editItem.videoUrls || [],
-          isBreaking: editItem.isBreaking || false
-        });
-        const existingPreviews = [
-          ...(editItem.imageUrls || []).map((url: string) => ({
-            id: Math.random().toString(36).substring(7),
-            localUrl: url,
-            remoteUrl: url,
-            type: 'image' as const,
-            progress: 100,
-            status: 'done' as const
-          })),
-          ...(editItem.videoUrls || []).map((url: string) => ({
-            id: Math.random().toString(36).substring(7),
-            localUrl: url,
-            remoteUrl: url,
-            type: 'video' as const,
-            progress: 100,
-            status: 'done' as const
-          }))
-        ];
-        setPreviews(existingPreviews);
+        // It's a legacy live update - set tab to manage
+        setActiveTab('manage');
       }
     }
   }, [editItem]);
@@ -206,7 +179,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: '',
           content: '',
           author: '',
-          category: 'World News/Geopolitics',
+          category: 'World News/ Geopolitics',
           imageUrls: [],
           videoUrls: [],
           isBreaking: false
@@ -231,7 +204,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     summary: '',
     content: '',
     author: '',
-    category: 'World News/Geopolitics',
+    category: 'World News/ Geopolitics',
     imageUrls: [] as string[],
     videoUrls: [] as string[],
     isBreaking: false
@@ -405,7 +378,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           summary: '',
           content: '',
           author: '',
-          category: 'World News/Geopolitics',
+          category: 'World News/ Geopolitics',
           imageUrls: [],
           videoUrls: [],
           isBreaking: false
@@ -633,7 +606,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                                   summary: item.summary || '',
                                   content: item.content || '',
                                   author: 'Global Lens Staff',
-                                  category: 'World News/Geopolitics',
+                                  category: 'World News/ Geopolitics',
                                   imageUrls: item.imageUrls || [],
                                   videoUrls: item.videoUrls || [],
                                   isBreaking: item.isBreaking || false
@@ -715,7 +688,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   value={article.category}
                   onChange={e => setArticle({...article, category: e.target.value})}
                 >
-                  <option>World News/Geopolitics</option>
+                  <option>World News/ Geopolitics</option>
                   <option>Economy</option>
                   <option>Diplomacy</option>
                   <option>Africa</option>
@@ -894,155 +867,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
               </div>
             </form>
           )}
-
-          {activeTab === 'update' && !showSettings && (
-            <form onSubmit={handlePostUpdate} className="space-y-4">
-              <input 
-                required
-                placeholder="Update Headline"
-                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none font-serif text-lg font-bold"
-                value={update.title}
-                onChange={e => setUpdate({...update, title: e.target.value})}
-              />
-              <textarea 
-                required
-                placeholder="Ticker Summary (Short & Punchy)"
-                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-20 text-sm"
-                value={update.summary}
-                onChange={e => setUpdate({...update, summary: e.target.value})}
-              />
-              <textarea 
-                required
-                placeholder="Full update content..."
-                className="w-full p-3 border border-gray-200 rounded focus:ring-2 focus:ring-bbc-red outline-none h-48"
-                value={update.content}
-                onChange={e => setUpdate({...update, content: e.target.value})}
-              />
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 space-y-3">
-                <label className="text-xs font-bold uppercase text-gray-500 flex items-center gap-2">
-                  <Zap className="w-3 h-3 text-bbc-red" /> Add Media by URL
-                </label>
-                <div className="flex gap-2">
-                  <select 
-                    value={urlType}
-                    onChange={e => setUrlType(e.target.value as 'image' | 'video')}
-                    className="p-2 text-xs border border-gray-200 rounded bg-white outline-none"
-                  >
-                    <option value="image">Image</option>
-                    <option value="video">Video</option>
-                  </select>
-                  <input 
-                    placeholder="Paste link here..."
-                    className="flex-1 p-2 text-xs border border-gray-200 rounded outline-none focus:ring-1 focus:ring-bbc-red"
-                    value={urlInput}
-                    onChange={e => setUrlInput(e.target.value)}
-                  />
-                  <button 
-                    type="button"
-                    onClick={() => handleAddByUrl('update')}
-                    className="bg-bbc-dark text-white px-4 py-2 text-xs font-bold rounded hover:bg-black transition-colors"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase text-gray-400">Media Attachments</label>
-                <div className="flex flex-wrap gap-2">
-                  {previews.map(preview => (
-                    <div key={preview.id} className="relative w-16 h-16 group">
-                      {preview.type === 'image' ? (
-                        <img 
-                          src={preview.localUrl} 
-                          className={`w-full h-full object-cover rounded border border-gray-200 ${preview.status === 'uploading' ? 'opacity-50' : ''}`} 
-                          referrerPolicy="no-referrer" 
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-black rounded flex items-center justify-center overflow-hidden">
-                          <video src={preview.localUrl} className={`w-full h-full object-cover ${preview.status === 'uploading' ? 'opacity-30' : ''}`} />
-                        </div>
-                      )}
-                      {preview.status === 'uploading' && (
-                        <>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <Loader2 className="w-4 h-4 animate-spin text-bbc-red" />
-                          </div>
-                        </>
-                      )}
-                      {preview.status === 'error' && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-red-500/20">
-                          <AlertCircle className="w-5 h-5 text-red-600" />
-                        </div>
-                      )}
-                      <button 
-                        type="button"
-                        onClick={() => removeFile(preview.remoteUrl || preview.localUrl, preview.type, 'update')}
-                        className="absolute -top-2 -right-2 bg-bbc-red text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  <label className="w-16 h-16 border-2 border-dashed border-gray-200 rounded flex items-center justify-center hover:border-bbc-red transition-colors cursor-pointer">
-                    <ImageIcon className="w-5 h-5 text-gray-300" />
-                    <input 
-                      type="file"
-                      className="hidden"
-                      accept="image/*,video/*"
-                      multiple
-                      onChange={(e) => {
-                        const files = Array.from(e.target.files || []);
-                        files.forEach(file => {
-                          const type = file.type.startsWith('image/') ? 'image' : 'video';
-                          handleFileUpload(file, type, 'update');
-                        });
-                        e.target.value = '';
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input 
-                  type="checkbox"
-                  checked={update.isBreaking}
-                  onChange={e => setUpdate({...update, isBreaking: e.target.checked})}
-                  className="w-4 h-4 accent-bbc-red"
-                />
-                <span className="text-sm font-bold uppercase text-bbc-red">Major Breaking Update</span>
-              </label>
-              <div className="flex gap-4">
-                {editingId && (
-                  <button 
-                    type="button"
-                    onClick={handleDelete}
-                    disabled={loading}
-                    className="flex-1 bg-gray-100 text-gray-600 py-4 font-bold uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                    Delete
-                  </button>
-                )}
-                <button 
-                  disabled={loading}
-                  className="flex-[2] bg-bbc-dark text-white py-4 font-bold uppercase tracking-widest hover:bg-black transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {uploading ? 'Uploading Media...' : 'Sending to Reader Feed...'}
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5" />
-                      {editingId ? 'Save Changes' : 'Post Update'}
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
+          {/* Legacy update form removed - replaced by Article creation only */}
         </div>
       </div>
     </div>

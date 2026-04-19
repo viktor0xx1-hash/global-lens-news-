@@ -93,7 +93,7 @@ Our mission is to deliver accurate, unbiased, and deep-dive journalism that help
 
 ## What We Cover
 - **World News/Geopolitics:** In-depth analysis of international relations and global power shifts.
-- **Security:** Updates on global security trends, conflicts, and defense strategies.
+- **Security:** Updates on global security trends and defense strategies.
 - **Economy:** Insights into the global economic landscape and its impact on geopolitics.
 - **Live Updates:** Real-time reporting on breaking news events as they happen.
 
