@@ -156,24 +156,27 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
         </div>
       </div>
       
-      {/* Mobile Navigation - Horizontal Scroll */}
-      <div className="md:hidden border-t border-gray-50 px-4 py-3 overflow-x-auto scrollbar-hide bg-white/80 backdrop-blur-sm">
-        <nav className="flex items-center gap-6 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-500 whitespace-nowrap">
-          <Link to="/category/geopolitics" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            World News/ Geopolitics
-          </Link>
-          <Link to="/category/economy" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            Economy
-          </Link>
-          <Link to="/category/diplomacy" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            Diplomacy
-          </Link>
-          <Link to="/category/africa" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            Africa
-          </Link>
-          <Link to="/about" className="hover:text-bbc-red transition-colors py-1 border-b-2 border-transparent">
-            About
-          </Link>
+      {/* Mobile Navigation - Two Row Layout */}
+      <div className="md:hidden border-t border-gray-100 px-4 py-4 bg-white/95 backdrop-blur-sm">
+        <nav className="flex flex-col gap-4">
+          {/* Top Row: Primary Category */}
+          <div className="flex justify-center">
+            <Link 
+              to="/category/geopolitics" 
+              className="text-bbc-red text-[11px] font-black uppercase tracking-[0.3em] border-b-2 border-bbc-red pb-1"
+            >
+              World News / Geopolitics
+            </Link>
+          </div>
+          {/* Bottom Row: Secondary Categories */}
+          <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-gray-500 px-1">
+            <Link to="/category/economy" className="hover:text-bbc-red transition-colors">Economy</Link>
+            <Link to="/category/diplomacy" className="hover:text-bbc-red transition-colors">Diplomacy</Link>
+            <Link to="/category/africa" className="hover:text-bbc-red transition-colors">Africa</Link>
+            <Link to="/about" className="hover:text-bbc-red transition-colors flex items-center gap-1">
+              About
+            </Link>
+          </div>
         </nav>
       </div>
     </header>
