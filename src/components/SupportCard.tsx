@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Copy, Check, Heart } from 'lucide-react';
 import { DONATION_CONFIG } from '../constants';
 
-export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sidebar' | 'article' }) {
+export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sidebar' | 'article' | 'footer' }) {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
@@ -10,6 +10,30 @@ export default function SupportCard({ variant = 'sidebar' }: { variant?: 'sideba
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  if (variant === 'footer') {
+    return (
+      <div className="p-8 bg-gray-50 border border-gray-100 rounded-xl max-w-2xl mx-auto shadow-sm">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="flex-1 text-center md:text-left">
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-bbc-dark mb-4">Support Truth</h4>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed">
+              Help us maintain independent deep reporting and countering disinformation worldwide.
+            </p>
+          </div>
+          <div className="w-full md:w-auto shrink-0">
+            <button 
+              onClick={copyToClipboard}
+              className="flex items-center justify-center gap-3 px-8 py-4 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest hover:bg-black transition-all shadow-md active:scale-95"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Heart className="w-4 h-4 fill-current" />}
+              {copied ? 'Address Copied' : 'Donate BTC'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (variant === 'article') {
     return (

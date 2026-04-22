@@ -3,7 +3,6 @@ import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, Mail, Link2, Check } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import SupportCard from './SupportCard';
 import { formatDate } from '../lib/utils';
 import ShareModal from './ShareModal';
 
@@ -157,8 +156,6 @@ export default function ArticleView({ article }: { article: Article }) {
           );
         })()}
       </div>
-
-      <SupportCard variant="article" />
 
       <footer className="mt-20 pt-12 border-t border-gray-100 pb-12">
         <div className="bg-gray-50 p-8 text-center rounded">
