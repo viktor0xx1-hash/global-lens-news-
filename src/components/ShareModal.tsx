@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Twitter, Facebook, MessageCircle, Mail, Link2, Check } from 'lucide-react';
 import { useState } from 'react';
+import { slugify } from '../lib/utils';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -9,15 +10,23 @@ interface ShareModalProps {
     title: string;
     summary: string;
     id: string;
+    category?: string;
   };
 }
 
 export default function ShareModal({ isOpen, onClose, article }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
   
-  // Use query parameter instead of path to avoid 404 on SPAs without server-side routing
   const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://globallens.online';
-  const shareUrl = `${baseUrl}/?article=${article.id}`;
+  
+  // Create SEO friendly URL if category exists
+  let shareUrl = `${baseUrl}/?article=${article.id}`;
+  if (article.category) {
+    const catSlug = slugify(article.category);
+    const slug = slugify(article.title);
+    shareUrl = `${baseUrl}/article/${catSlug}/${article.id}/${slug}`;
+  }
+  
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 

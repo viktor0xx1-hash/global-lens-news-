@@ -61,7 +61,7 @@ function AppContent() {
         }>
           <Routes>
             <Route path="/" element={<HomePage isAdmin={isAdmin} handleEdit={handleEdit} />} />
-            <Route path="/article/:id/:slug" element={<ArticlePage />} />
+            <Route path="/article/:category/:id/:slug" element={<ArticlePage />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/about" element={<AboutPage />} />
           </Routes>

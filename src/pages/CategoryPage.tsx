@@ -5,7 +5,7 @@ import { collection, query, orderBy, onSnapshot, where, limit, startAfter, getDo
 import { motion } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import { formatDate } from '../lib/utils';
+import { formatDate, slugify } from '../lib/utils';
 import { ShareModal, NewsReel } from '../components';
 
 interface Article {
@@ -171,8 +171,9 @@ export default function CategoryPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 onClick={() => {
-                  const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                  navigate(`/article/${article.id}/${slug}`);
+                  const slug = slugify(article.title);
+                  const catSlug = slugify(article.category);
+                  navigate(`/article/${catSlug}/${article.id}/${slug}`);
                 }}
                 className="group cursor-pointer border-b border-gray-50 pb-8 last:border-0"
               >

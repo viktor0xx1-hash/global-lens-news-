@@ -3,6 +3,7 @@ import { db } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { slugify } from '../lib/utils';
 
 export default function NewsReel() {
   const [articles, setArticles] = useState<any[]>([]);
@@ -27,8 +28,9 @@ export default function NewsReel() {
   if (articles.length < 3) return null; // Only show if we have enough content to reel
 
   const handleArticleClick = (article: any) => {
-    const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    navigate(`/article/${article.id}/${slug}`);
+    const slug = slugify(article.title);
+    const catSlug = slugify(article.category);
+    navigate(`/article/${catSlug}/${article.id}/${slug}`);
   };
 
   // We duplicate the list for a seamless infinite scroll effect

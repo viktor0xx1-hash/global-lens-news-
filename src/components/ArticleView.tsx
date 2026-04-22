@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import Markdown from 'react-markdown';
 import { Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, Mail, Link2, Check } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import { formatDate } from '../lib/utils';
+import { formatDate, slugify } from '../lib/utils';
 import ShareModal from './ShareModal';
 import NewsReel from './NewsReel';
 
@@ -27,9 +27,10 @@ export default function ArticleView({ article }: { article: Article }) {
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const slug = slugify(article.title);
+  const catSlug = slugify(article.category);
   const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://globallens.online';
-  const shareUrl = `${baseUrl}/article/${article.id}/${slug}`;
+  const shareUrl = `${baseUrl}/article/${catSlug}/${article.id}/${slug}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 

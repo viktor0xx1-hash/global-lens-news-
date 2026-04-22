@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, limit, startAfter, getDocs, Que
 import { motion } from 'motion/react';
 import { Clock, User, Tag, Bookmark, Edit3, Share2, ChevronRight, Loader2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import { formatDate } from '../lib/utils';
+import { formatDate, slugify } from '../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import ShareModal from './ShareModal';
 
@@ -126,9 +126,10 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
   const restArticles = articles.slice(6);
 
   const handleArticleClick = (article: Article) => {
-    // Navigate to article page with slug-like URL
-    const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    navigate(`/article/${article.id}/${slug}`);
+    // Navigate to article page with slug-like URL including category
+    const slug = slugify(article.title);
+    const catSlug = slugify(article.category);
+    navigate(`/article/${catSlug}/${article.id}/${slug}`);
   };
 
   return (
