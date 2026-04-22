@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary } from './components';
+import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker } from './components';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { auth } from './firebase';
@@ -49,6 +49,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-bbc-dark selection:bg-bbc-red selection:text-white">
+      <BreakingNewsTicker />
       <Header onAdminClick={() => setShowAdmin(true)} onBookmarksClick={() => setShowBookmarks(true)} />
     
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 w-full">

@@ -9,3 +9,4 @@ export { default as Logo } from './Logo';
 export { default as ShareModal } from './ShareModal';
 export { default as SupportCard } from './SupportCard';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as BreakingNewsTicker } from './BreakingNewsTicker';

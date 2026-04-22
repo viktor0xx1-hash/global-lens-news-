@@ -16,7 +16,8 @@ export default function ShareModal({ isOpen, onClose, article }: ShareModalProps
   const [copied, setCopied] = useState(false);
   
   // Use query parameter instead of path to avoid 404 on SPAs without server-side routing
-  const shareUrl = `${window.location.origin}/?article=${article.id}`;
+  const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://globallens.online';
+  const shareUrl = `${baseUrl}/?article=${article.id}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 

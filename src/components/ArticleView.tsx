@@ -28,7 +28,8 @@ export default function ArticleView({ article }: { article: Article }) {
   const [copied, setCopied] = useState(false);
 
   const slug = article.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const shareUrl = `${window.location.origin}/article/${article.id}/${slug}`;
+  const baseUrl = window.location.hostname === 'localhost' ? window.location.origin : 'https://globallens.online';
+  const shareUrl = `${baseUrl}/article/${article.id}/${slug}`;
   const encodedUrl = encodeURIComponent(shareUrl);
   const encodedTitle = encodeURIComponent(article.title);
 
