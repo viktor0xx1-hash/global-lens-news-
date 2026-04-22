@@ -29,7 +29,7 @@ export default function NewsReel() {
 
   const handleArticleClick = (article: any) => {
     const slug = slugify(article.title);
-    const catSlug = slugify(article.category);
+    const catSlug = article.category ? slugify(article.category) : 'intelligence';
     navigate(`/article/${catSlug}/${article.id}/${slug}`);
   };
 

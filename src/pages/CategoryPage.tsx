@@ -172,7 +172,7 @@ export default function CategoryPage() {
                 transition={{ delay: idx * 0.05 }}
                 onClick={() => {
                   const slug = slugify(article.title);
-                  const catSlug = slugify(article.category);
+                  const catSlug = article.category ? slugify(article.category) : 'intelligence';
                   navigate(`/article/${catSlug}/${article.id}/${slug}`);
                 }}
                 className="group cursor-pointer border-b border-gray-50 pb-8 last:border-0"

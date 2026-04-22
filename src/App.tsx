@@ -61,7 +61,10 @@ function AppContent() {
         }>
           <Routes>
             <Route path="/" element={<HomePage isAdmin={isAdmin} handleEdit={handleEdit} />} />
+            {/* New SEO Format */}
             <Route path="/article/:category/:id/:slug" element={<ArticlePage />} />
+            {/* Legacy Format (Backward Compatibility) */}
+            <Route path="/article/:id/:slug" element={<ArticlePage />} />
             <Route path="/category/:categoryId" element={<CategoryPage />} />
             <Route path="/about" element={<AboutPage />} />
           </Routes>

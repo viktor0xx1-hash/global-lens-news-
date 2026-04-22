@@ -126,9 +126,9 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
   const restArticles = articles.slice(6);
 
   const handleArticleClick = (article: Article) => {
-    // Navigate to article page with slug-like URL including category
+    // Navigate to article page with slug-like URL including category if available
     const slug = slugify(article.title);
-    const catSlug = slugify(article.category);
+    const catSlug = article.category ? slugify(article.category) : 'intelligence';
     navigate(`/article/${catSlug}/${article.id}/${slug}`);
   };
 
