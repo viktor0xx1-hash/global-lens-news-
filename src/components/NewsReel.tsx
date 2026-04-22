@@ -72,6 +72,7 @@ export default function NewsReel() {
                   src={article.imageUrls?.[0] || article.imageUrl} 
                   className="w-full h-full object-cover"
                   alt={article.title}
+                  loading="lazy"
                   referrerPolicy="no-referrer"
                 />
               </div>

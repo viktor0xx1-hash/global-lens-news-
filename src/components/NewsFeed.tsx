@@ -24,7 +24,9 @@ interface Article {
 }
 
 const Skeleton = ({ className }: { className: string }) => (
-  <div className={`bg-gray-200 animate-pulse rounded-sm ${className}`} />
+  <div className={`bg-gray-100 animate-pulse rounded-sm relative overflow-hidden ${className}`}>
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+  </div>
 );
 
 export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Article) => void, limitCount?: number }) {

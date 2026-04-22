@@ -9,10 +9,21 @@
   --color-bbc-dark: #1F1F1F;
   
   --animate-spin-slow: spin 20s linear infinite;
+  
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
 }
 
 body {
-  @apply bg-white text-bbc-dark font-sans antialiased;
+  @apply bg-white text-bbc-dark font-sans antialiased selection:bg-bbc-red/10 selection:text-bbc-red;
+}
+
+/* Optimize image rendering */
+img {
+  content-visibility: auto;
 }
 
 .markdown-body h1 { @apply text-3xl font-serif font-bold mb-4; }
