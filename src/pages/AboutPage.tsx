@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { Globe, Shield, Zap, Target, BookOpen, Users } from 'lucide-react';
+import { NewsReel } from '../components';
 
 export default function AboutPage() {
   return (
@@ -100,6 +101,10 @@ export default function AboutPage() {
             <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Key Geozones</div>
           </div>
         </section>
+      </div>
+
+      <div className="mt-20 -mx-4 md:-mx-12">
+        <NewsReel />
       </div>
     </div>
   );

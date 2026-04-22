@@ -5,6 +5,7 @@ import { Clock, User, Tag, Share2, Bookmark, Twitter, Facebook, MessageCircle, M
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
 import ShareModal from './ShareModal';
+import NewsReel from './NewsReel';
 
 interface Article {
   id: string;
@@ -155,6 +156,10 @@ export default function ArticleView({ article }: { article: Article }) {
             </>
           );
         })()}
+      </div>
+
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+        <NewsReel />
       </div>
 
       <footer className="mt-20 pt-12 border-t border-gray-100 pb-12">

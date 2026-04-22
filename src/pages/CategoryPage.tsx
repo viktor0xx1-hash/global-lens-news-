@@ -6,7 +6,7 @@ import { motion } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate } from '../lib/utils';
-import { ShareModal } from '../components';
+import { ShareModal, NewsReel } from '../components';
 
 interface Article {
   id: string;
@@ -243,6 +243,10 @@ export default function CategoryPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-20 -mx-4">
+        <NewsReel />
       </div>
 
       {sharingArticle && (
