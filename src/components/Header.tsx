@@ -2,42 +2,21 @@ import { useState, useEffect } from 'react';
 import { auth, signIn, signInPopup, logOut, db } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
-import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut, Info } from 'lucide-react';
+import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Search, Bookmark, LogOut, Info } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatTime, slugify } from '../lib/utils';
 import { Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 
-export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClick: () => void, onBookmarksClick: () => void }) {
+export default function Header({ onAdminClick, onBookmarksClick, onSearchClick }: { 
+  onAdminClick: () => void, 
+  onBookmarksClick: () => void,
+  onSearchClick: () => void 
+}) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useUserPreferences();
   const navigate = useNavigate();
-
-  const handleNotificationClick = async (notif: any) => {
-    markAsRead(notif.id);
-    setShowNotifications(false);
-    
-    if (notif.type === 'article' && notif.linkId) {
-      try {
-        const articleRef = doc(db, 'articles', notif.linkId);
-        const articleSnap = await getDoc(articleRef);
-        if (articleSnap.exists()) {
-          const article = articleSnap.data();
-          const slug = slugify(article.title || '');
-          const catSlug = article.category ? slugify(article.category) : 'intelligence';
-          navigate(`/article/${catSlug}/${notif.linkId}/${slug}`);
-        } else {
-          // Fallback if document not found
-          navigate(`/article/${notif.linkId}/view`);
-        }
-      } catch (err) {
-        console.error("Error navigating from notification:", err);
-      }
-    }
-  };
 
   useEffect(() => {
     // Check for redirect result
@@ -90,63 +69,14 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Notifications */}
-            <div className="relative">
-              <button 
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors relative"
-              >
-                <Bell className="w-5 h-5 text-gray-600" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-bbc-red text-white text-[10px] flex items-center justify-center rounded-full font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
-
-              <AnimatePresence>
-                {showNotifications && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 shadow-xl rounded-lg overflow-hidden z-50"
-                  >
-                    <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500">Notifications</h4>
-                      <button 
-                        onClick={markAllAsRead}
-                        className="text-[10px] font-bold uppercase tracking-widest text-bbc-red hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length === 0 ? (
-                        <div className="p-8 text-center text-gray-400 text-xs font-medium uppercase tracking-widest">
-                          No notifications
-                        </div>
-                      ) : (
-                        notifications.map((notif) => (
-                          <div 
-                            key={notif.id}
-                            onClick={() => handleNotificationClick(notif)}
-                            className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${!notif.read ? 'bg-red-50/30' : ''}`}
-                          >
-                            {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-bbc-red" />}
-                            <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-bbc-red">{notif.title}</span>
-                              <span className="text-[8px] text-gray-400 uppercase font-bold">{formatTime(notif.timestamp)}</span>
-                            </div>
-                            <p className="text-xs font-medium text-gray-700 line-clamp-2">{notif.message}</p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Search Trigger */}
+            <button 
+              onClick={onSearchClick}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+              title="Search Intelligence"
+            >
+              <Search className="w-5 h-5 text-gray-600 group-hover:text-bbc-red transition-colors" />
+            </button>
 
             {/* Bookmarks Link */}
             <button 

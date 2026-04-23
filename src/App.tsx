@@ -1,6 +1,6 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker } from './components';
+import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker, SearchView } from './components';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { auth } from './firebase';
@@ -16,6 +16,7 @@ function AppContent() {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<{ title: string, content: string } | null>(null);
   const location = useLocation();
 
@@ -49,7 +50,11 @@ function AppContent() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-bbc-dark selection:bg-bbc-red selection:text-white">
-      <Header onAdminClick={() => setShowAdmin(true)} onBookmarksClick={() => setShowBookmarks(true)} />
+      <Header 
+        onAdminClick={() => setShowAdmin(true)} 
+        onBookmarksClick={() => setShowBookmarks(true)} 
+        onSearchClick={() => setShowSearch(true)}
+      />
       <BreakingNewsTicker />
     
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8 w-full">
@@ -79,6 +84,13 @@ function AppContent() {
           {showBookmarks && (
             <BookmarksView 
               onClose={() => setShowBookmarks(false)} 
+            />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {showSearch && (
+            <SearchView 
+              onClose={() => setShowSearch(false)} 
             />
           )}
         </AnimatePresence>

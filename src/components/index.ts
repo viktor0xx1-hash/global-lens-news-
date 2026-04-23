@@ -11,3 +11,4 @@ export { default as SupportCard } from './SupportCard';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as BreakingNewsTicker } from './BreakingNewsTicker';
 export { default as NewsReel } from './NewsReel';
+export { default as SearchView } from './SearchView';
