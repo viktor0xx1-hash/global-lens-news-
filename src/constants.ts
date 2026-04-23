@@ -2,111 +2,103 @@ export const POLICIES = {
   PRIVACY: `
 # Privacy Policy for Global Lens
 
-**Effective Date:** April 4, 2026
+**Effective Date:** April 23, 2026
 
-At Global Lens, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website.
+At Global Lens, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website, globallens.online.
 
 ## 1. Information We Collect
-We may collect personal information that you voluntarily provide to us when you subscribe to our newsletter or contact us. This may include your name and email address.
+We may collect personal information that you voluntarily provide to us when you subscribe to our newsletter or contact us. This may include your name and email address. We also collect non-personal information through cookies to improve user experience.
 
-## 2. How We Use Your Information
-We use the information we collect to:
-- Provide and maintain our service.
-- Send you newsletters and updates.
-- Respond to your inquiries.
-- Monitor the usage of our service.
+## 2. Cookies and Tracking Technologies
+Global Lens uses cookies to personalize content and ads, to provide social media features and to analyze our traffic. We also share information about your use of our site with our social media, advertising and analytics partners.
 
-## 3. Cookies and Tracking Technologies
-We use cookies and similar tracking technologies to track the activity on our service and hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
+### Google AdSense and DoubleClick Cookie
+- Google, as a third-party vendor, uses cookies to serve ads on your site.
+- Google's use of the DoubleClick cookie enables it and its partners to serve ads to your users based on their visit to your sites and/or other sites on the Internet.
+- Users may opt out of the use of the DoubleClick cookie for interest-based advertising by visiting [Google Ad Settings](https://www.google.com/ads/preferences/).
 
-## 4. Third-Party Services
-We may use third-party services, such as Google AdSense, that collect, monitor, and analyze information to increase our service's functionality. These third-party service providers have their own privacy policies.
+## 3. Third-Party Advertising
+We use third-party advertising companies to serve ads when you visit our website. These companies may use information (not including your name, address, email address, or telephone number) about your visits to this and other websites in order to provide advertisements about goods and services of interest to you.
+
+## 4. California Online Privacy Protection Act (CalOPPA)
+CalOPPA requires commercial websites to post a privacy policy. We comply with this by clearly stating what information is collected and how it is used.
 
 ## 5. Contact Us
-If you have any questions about this Privacy Policy, please contact us at Globallens0247@gmail.com.
+If you have any questions about this Privacy Policy, please contact our editorial team at Globallens0247@gmail.com.
   `,
   TERMS: `
 # Terms of Service for Global Lens
 
-**Effective Date:** April 4, 2026
+**Effective Date:** April 23, 2026
 
-By accessing or using Global Lens, you agree to be bound by these Terms of Service.
+By accessing or using Global Lens (globallens.online), you agree to be bound by these Terms of Service and all applicable laws and regulations.
 
 ## 1. Use of Content
-All content provided on Global Lens is for informational purposes only. You may not reproduce, distribute, or transmit any content without prior written permission from Global Lens.
+All content provided on Global Lens is for informational purposes only. The "Intelligence Reports" and analysis are protected by copyright. You may not reproduce, distribute, or transmit any content without prior written permission.
 
-## 2. User Conduct
-You agree not to use the service for any unlawful purpose or to engage in any conduct that restricts or inhibits anyone else's use or enjoyment of the service.
+## 2. Professional Conduct
+You agree to use this site strictly for lawful purposes. Harassment, use of obscene language, or interference with site security is strictly prohibited.
 
-## 3. Intellectual Property
-The service and its original content, features, and functionality are and will remain the exclusive property of Global Lens and its licensors.
+## 3. Disclaimers
+The analysis provided represents Global Lens' commitment to neutral reporting. However, political and economic landscapes shift rapidly; readers should use their judgment when acting upon information provided.
 
 ## 4. Limitation of Liability
-In no event shall Global Lens be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your access to or use of the service.
+Global Lens and its editors shall not be liable for any results arising from the use of the intelligence or analysis provided on this platform.
 
-## 5. Changes to Terms
-We reserve the right to modify or replace these Terms at any time. Your continued use of the service after any changes constitutes acceptance of the new Terms.
+## 5. Contact
+For legal inquiries, contact: Globallens0247@gmail.com.
   `,
   DMCA: `
 # DMCA Policy for Global Lens
 
-Global Lens respects the intellectual property rights of others. In accordance with the Digital Millennium Copyright Act (DMCA), we will respond promptly to claims of copyright infringement.
+Global Lens respects the intellectual property rights of others. In accordance with the Digital Millennium Copyright Act (DMCA), we respond promptly to valid claims of copyright infringement.
 
-## 1. Reporting Infringement
-If you believe that your copyrighted work has been copied in a way that constitutes copyright infringement, please provide our Copyright Agent with the following information:
-- A physical or electronic signature of the copyright owner or a person authorized to act on their behalf.
-- Identification of the copyrighted work claimed to have been infringed.
-- Identification of the material that is claimed to be infringing.
-- Your contact information, including your address, telephone number, and an email address.
-- A statement that you have a good faith belief that use of the material is not authorized by the copyright owner.
-- A statement that the information in the notification is accurate, and under penalty of perjury, that you are authorized to act on behalf of the copyright owner.
+## 1. Notice of Infringement
+To file a notice, please provide:
+- A physical signature of the person authorized to act on behalf of the owner.
+- Description of the copyrighted work you claim was infringed.
+- Link to the material on Global Lens that you claim is infringing.
+- Your contact details.
 
-## 2. Contact Information
-Please send DMCA notices to: Globallens0247@gmail.com.
+## 2. Designated Agent
+Please send all DMCA notices to: Globallens0247@gmail.com.
   `,
   COOKIES: `
 # Cookie Policy for Global Lens
 
-**Effective Date:** April 4, 2026
+**Effective Date:** April 23, 2026
 
-Global Lens uses cookies to improve your experience on our website.
+Global Lens uses cookies to improve your experience and support our independent journalism.
 
 ## 1. What are Cookies?
-Cookies are small text files that are placed on your computer by websites that you visit. They are widely used to make websites work, or work more efficiently, as well as to provide information to the owners of the site.
+Cookies are small files placed on your device to help the site provide a better user experience.
 
-## 2. How We Use Cookies
-We use cookies to:
-- Understand how you use our website.
-- Remember your preferences.
-- Show you relevant advertisements through Google AdSense.
+## 2. Advertising Cookies
+We use Google AdSense to serve ads. Google uses cookies to serve ads based on a user's prior visits to our website. Google's use of advertising cookies enables it and its partners to serve ads to our users based on their visit to our site and/or other sites on the Internet.
 
-## 3. Managing Cookies
-Most web browsers allow some control of most cookies through the browser settings. To find out more about cookies, including how to see what cookies have been set, visit www.aboutcookies.org.
+## 3. How to Opt-Out
+You can choose to disable or selectively turn off our cookies or third-party cookies in your browser settings. You can also opt out of a third-party vendor's use of cookies for interest-based advertising by visiting [aboutads.info](www.aboutads.info).
   `,
   ABOUT: `
-# About Global Lens
+# About Global Lens Intelligence
 
-**Global Lens** is a premier independent news platform dedicated to providing world-class geopolitical analysis, security insights, and real-time live updates for a global audience.
+**Global Lens** (globallens.online) is a premier independent news platform dedicated to providing world-class geopolitical analysis and security insights.
 
-## Our Mission
-Our mission is to deliver accurate, unbiased, and deep-dive journalism that helps our readers navigate the complexities of the modern world. In an era of rapid information and frequent disinformation, we strive to be a beacon of truth and clarity.
+## Our Neutral Mission
+Our mission is to deliver accurate, unbiased intelligence by showcasing multi-faceted perspectives. We believe that by examining both sides of every geopolitical shift, we provide the clarity needed for a truly neutral global understanding.
 
 ## What We Cover
-- **World News/Geopolitics:** In-depth analysis of international relations and global power shifts.
-- **Security:** Updates on global security trends and defense strategies.
-- **Economy:** Insights into the global economic landscape and its impact on geopolitics.
-- **Live Updates:** Real-time reporting on breaking news events as they happen.
+- **Geopolitics:** In-depth analysis of international relations and power shifts.
+- **African Intelligence:** Ground-truth reports from emerging African markets and political zones.
+- **Global Economy:** Insights into how economic shifts drive diplomatic outcomes.
 
 ## Our Values
-- **Integrity:** We adhere to the highest standards of journalistic ethics.
-- **Independence:** We are not beholden to any political or corporate interests.
-- **Accuracy:** We verify our facts rigorously before publication.
-- **Global Perspective:** We provide a truly international viewpoint on world events.
+- **Neutrality:** We are committed to showing all perspectives without bias.
+- **Integrity:** We adhere to strict journalistic ethics.
+- **Independence:** We are not beholden to any political groups.
 
 ## Contact Us
-We value feedback from our readers. If you have any questions, suggestions, or would like to contribute, please reach out to us at **Globallens0247@gmail.com**.
-
-Thank you for trusting Global Lens as your source for global news and analysis.
+Reach our editorial team at **Globallens0247@gmail.com**.
   `
 };
 

@@ -65,8 +65,7 @@ export default function AboutPage() {
         <section className="prose prose-red max-w-none">
           <h2 className="font-serif font-bold text-3xl mb-6">Our DNA</h2>
           <p className="text-gray-700 leading-relaxed font-serif text-lg italic border-l-4 border-bbc-red pl-6 py-2">
-            "Clarity is the new currency. The most important 
-            stories are often the ones happening just below the surface."
+            "We believe truth is found in the balance of perspectives. By examining both sides of every geopolitical shift, we provide the clarity needed for a neutral, global understanding."
           </p>
           <div className="h-0.5 w-24 bg-bbc-red my-12" />
           <div className="space-y-6 text-gray-700 leading-relaxed text-lg">
@@ -76,9 +75,11 @@ export default function AboutPage() {
               war, and diplomacy on a global scale.
             </p>
             <p>
-              We provide a specialized voice for <strong>Africa Updates</strong> 
-              and <strong>Geopolitical World Events</strong>, delivering 
-              ground-truth reports from emerging markets to established powers.
+              We operate as a committed <strong>neutral intelligence source</strong>, 
+              dedicated to showcasing multifaceted perspectives from all sides of 
+              an issue. Our mission is to bridge the gap between 
+              raw geopolitical events and informed, unbiased decision-making 
+              for our global audience.
             </p>
           </div>
         </section>
