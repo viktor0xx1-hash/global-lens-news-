@@ -14,7 +14,7 @@ export default function NewsReel() {
     const q = query(
       collection(db, 'articles'),
       orderBy('publishedAt', 'desc'),
-      limit(24)
+      limit(10)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {

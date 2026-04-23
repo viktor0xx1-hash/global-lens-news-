@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker, SearchView } from './components';
 import { motion, AnimatePresence } from 'motion/react';
@@ -38,10 +38,10 @@ function AppContent() {
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
-  const handleEdit = (item: any) => {
+  const handleEdit = useCallback((item: any) => {
     setEditingItem(item);
     setShowAdmin(true);
-  };
+  }, []);
 
   const handleCloseAdmin = () => {
     setShowAdmin(false);

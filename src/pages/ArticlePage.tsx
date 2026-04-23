@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { ArticleView } from '../components';
 import { motion } from 'motion/react';
@@ -13,27 +13,24 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchArticle = async () => {
-      setLoading(true);
-      try {
-        if (!id) return;
-        
-        // Try articles collection
-        const docRef = doc(db, 'articles', id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          setArticle({ id: docSnap.id, ...docSnap.data() });
-        }
-      } catch (error) {
-        console.error("Error fetching article:", error);
-      } finally {
-        setLoading(false);
+    if (!id) return;
+    
+    setLoading(true);
+    // Use onSnapshot for better resiliency and caching behavior
+    const unsubscribe = onSnapshot(doc(db, 'articles', id), (docSnap) => {
+      if (docSnap.exists()) {
+        setArticle({ id: docSnap.id, ...docSnap.data() });
+      } else {
+        setArticle(null);
       }
-    };
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching article:", error);
+      setLoading(false);
+    });
 
-    fetchArticle();
     window.scrollTo(0, 0);
+    return () => unsubscribe();
   }, [id]);
 
   if (loading) {
