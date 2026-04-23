@@ -270,6 +270,18 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
                     >
                       <Share2 className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
+                    {onEdit && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(article);
+                        }}
+                        className="p-1 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                        title="Edit Article"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -325,6 +337,18 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
                 >
                   <Share2 className="w-3.5 h-3.5" />
                 </button>
+                {onEdit && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(article);
+                    }}
+                    className="p-1.5 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
+                    title="Edit Article"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();

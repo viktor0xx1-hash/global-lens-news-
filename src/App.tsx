@@ -70,7 +70,7 @@ function AppContent() {
             <Route path="/article/:category/:id/:slug" element={<ArticlePage />} />
             {/* Legacy Format (Backward Compatibility) */}
             <Route path="/article/:id/:slug" element={<ArticlePage />} />
-            <Route path="/category/:categoryId" element={<CategoryPage />} />
+            <Route path="/category/:categoryId" element={<CategoryPage isAdmin={isAdmin} onEdit={handleEdit} />} />
             <Route path="/about" element={<AboutPage />} />
           </Routes>
         </Suspense>
@@ -91,6 +91,8 @@ function AppContent() {
           {showSearch && (
             <SearchView 
               onClose={() => setShowSearch(false)} 
+              isAdmin={isAdmin}
+              onEdit={handleEdit}
             />
           )}
         </AnimatePresence>

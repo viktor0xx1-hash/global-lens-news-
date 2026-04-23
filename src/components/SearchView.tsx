@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, X, Clock, ArrowRight, Loader2 } from 'lucide-react';
+import { Search, X, Clock, ArrowRight, Loader2, Edit3 } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +15,11 @@ interface Article {
   imageUrl?: string;
 }
 
-export default function SearchView({ onClose }: { onClose: () => void }) {
+export default function SearchView({ onClose, isAdmin, onEdit }: { 
+  onClose: () => void,
+  isAdmin?: boolean,
+  onEdit?: (article: any) => void
+}) {
   const [searchTerm, setSearchTerm] = useState('');
   const [articles, setArticles] = useState<Article[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
@@ -143,7 +147,22 @@ export default function SearchView({ onClose }: { onClose: () => void }) {
                       {article.summary}
                     </p>
                   </div>
-                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-bbc-red shrink-0 self-center opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                  <div className="flex flex-col items-center gap-2 self-center">
+                    <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-bbc-red shrink-0 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
+                    {isAdmin && onEdit && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(article);
+                          onClose();
+                        }}
+                        className="p-1.5 rounded-full text-gray-300 hover:text-bbc-red transition-colors"
+                        title="Edit Article"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </div>

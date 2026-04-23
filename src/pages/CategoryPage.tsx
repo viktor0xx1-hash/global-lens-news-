@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs, QueryDocumentSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2, Edit3 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate, slugify } from '../lib/utils';
 import { ShareModal, NewsReel } from '../components';
@@ -21,7 +21,7 @@ interface Article {
   isBreaking?: boolean;
 }
 
-export default function CategoryPage() {
+export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, onEdit?: (article: any) => void }) {
   const { categoryId } = useParams();
   const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
@@ -218,6 +218,18 @@ export default function CategoryPage() {
                   >
                     <Share2 className="w-3.5 h-3.5" />
                   </button>
+                  {isAdmin && onEdit && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(article);
+                      }}
+                      className="p-2 rounded-full bg-gray-50 text-gray-400 hover:bg-bbc-red hover:text-white transition-all"
+                      title="Edit Article"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <span className="ml-auto text-bbc-red opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest">
                     Read Report <ChevronRight className="w-3 h-3" />
                   </span>
