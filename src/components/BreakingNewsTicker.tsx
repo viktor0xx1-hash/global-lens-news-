@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
 import { AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { slugify } from '../lib/utils';
 
 export default function BreakingNewsTicker() {
   const [news, setNews] = useState<any[]>([]);
@@ -44,17 +46,22 @@ export default function BreakingNewsTicker() {
           <span>Breaking</span>
         </div>
         
-        <div className="relative flex-1 h-4">
+        <div className="relative flex-1 h-4 group">
           <AnimatePresence mode="wait">
-            <motion.p
+            <motion.div
               key={currentIndex}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="absolute inset-0 text-[10px] md:text-xs font-bold uppercase tracking-wider truncate"
+              className="absolute inset-0"
             >
-              {news[currentIndex]?.title}
-            </motion.p>
+              <Link 
+                to={`/article/${news[currentIndex]?.category ? slugify(news[currentIndex].category) : 'intelligence'}/${news[currentIndex]?.id}/${slugify(news[currentIndex]?.title || '')}`}
+                className="block text-[10px] md:text-xs font-bold uppercase tracking-wider truncate hover:text-white/80 transition-colors"
+              >
+                {news[currentIndex]?.title}
+              </Link>
+            </motion.div>
           </AnimatePresence>
         </div>
       </div>

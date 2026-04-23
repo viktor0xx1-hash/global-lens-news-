@@ -1,18 +1,43 @@
 import { useState, useEffect } from 'react';
-import { auth, signIn, signInPopup, logOut } from '../firebase';
+import { auth, signIn, signInPopup, logOut, db } from '../firebase';
 import { onAuthStateChanged, User, getRedirectResult } from 'firebase/auth';
 import Logo from './Logo';
 import { LayoutDashboard, Globe, TrendingUp, ShieldAlert, Bell, Bookmark, LogOut, Info } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { motion, AnimatePresence } from 'motion/react';
-import { formatTime } from '../lib/utils';
-import { Link } from 'react-router-dom';
+import { formatTime, slugify } from '../lib/utils';
+import { Link, useNavigate } from 'react-router-dom';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClick: () => void, onBookmarksClick: () => void }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useUserPreferences();
+  const navigate = useNavigate();
+
+  const handleNotificationClick = async (notif: any) => {
+    markAsRead(notif.id);
+    setShowNotifications(false);
+    
+    if (notif.type === 'article' && notif.linkId) {
+      try {
+        const articleRef = doc(db, 'articles', notif.linkId);
+        const articleSnap = await getDoc(articleRef);
+        if (articleSnap.exists()) {
+          const article = articleSnap.data();
+          const slug = slugify(article.title || '');
+          const catSlug = article.category ? slugify(article.category) : 'intelligence';
+          navigate(`/article/${catSlug}/${notif.linkId}/${slug}`);
+        } else {
+          // Fallback if document not found
+          navigate(`/article/${notif.linkId}/view`);
+        }
+      } catch (err) {
+        console.error("Error navigating from notification:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     // Check for redirect result
@@ -105,7 +130,7 @@ export default function Header({ onAdminClick, onBookmarksClick }: { onAdminClic
                         notifications.map((notif) => (
                           <div 
                             key={notif.id}
-                            onClick={() => markAsRead(notif.id)}
+                            onClick={() => handleNotificationClick(notif)}
                             className={`p-4 border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer relative ${!notif.read ? 'bg-red-50/30' : ''}`}
                           >
                             {!notif.read && <div className="absolute left-0 top-0 bottom-0 w-1 bg-bbc-red" />}
