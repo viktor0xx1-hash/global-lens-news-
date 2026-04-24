@@ -91,3 +91,21 @@ export function updateMeta(title?: string, description?: string, path?: string) 
   const ogUrl = document.querySelector('meta[property="og:url"]');
   if (ogUrl) ogUrl.setAttribute('content', fullUrl);
 }
+
+/**
+ * Updates JSON-LD structured data for Google News and search visibility.
+ */
+export function updateSchema(type: 'NewsArticle' | 'WebSite', data: any) {
+  let script = document.querySelector('script[type="application/ld+json"]');
+  if (!script) {
+    script = document.createElement('script');
+    script.setAttribute('type', 'application/ld+json');
+    document.head.appendChild(script);
+  }
+
+  const baseSchema = {
+    "@context": "https://schema.org",
+  };
+
+  script.textContent = JSON.stringify({ ...baseSchema, ...data });
+}

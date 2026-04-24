@@ -5,7 +5,7 @@ import { db } from '../firebase';
 import { ArticleView } from '../components';
 import { motion } from 'motion/react';
 import { Loader2, ArrowLeft } from 'lucide-react';
-import { updateMeta, slugify } from '../lib/utils';
+import { updateMeta, slugify, updateSchema, toDate } from '../lib/utils';
 
 export default function ArticlePage() {
   const { id } = useParams();
@@ -29,6 +29,29 @@ export default function ArticlePage() {
         const category = data.category || 'intelligence';
         const path = `/article/${slugify(category)}/${docSnap.id}/${slugify(title)}`;
         updateMeta(title, summary, path);
+
+        // Update Google News Metadata (Schema.org)
+        updateSchema('NewsArticle', {
+          "@type": "NewsArticle",
+          "headline": title,
+          "description": summary,
+          "image": [data.imageUrl || ""],
+          "datePublished": toDate(data.publishedAt).toISOString(),
+          "dateModified": toDate(data.updatedAt || data.publishedAt).toISOString(),
+          "author": [{
+            "@type": "Person",
+            "name": data.author || "Global Lens Intelligence",
+            "url": "https://globallens.online/about"
+          }],
+          "publisher": {
+            "@type": "Organization",
+            "name": "Global Lens",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://globallens.online/logo.png"
+            }
+          }
+        });
       } else {
         setArticle(null);
       }
