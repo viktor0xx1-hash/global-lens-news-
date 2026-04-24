@@ -31,13 +31,6 @@ function AppContent() {
     '/about': 'About Our Geopolitical Perspective',
   };
 
-  // Domain Guard: Redirect from .vercel.app to .online
-  useEffect(() => {
-    if (window.location.hostname.includes('.vercel.app')) {
-      window.location.replace(`https://globallens.online${window.location.pathname}${window.location.search}`);
-    }
-  }, []);
-
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {

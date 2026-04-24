@@ -272,36 +272,35 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const uploading = previews.some(p => p.status === 'uploading');
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
+    if (!cloudName || !uploadPreset) {
+      alert("CLOUD STORAGE NOT CONFIGURED: Please go to 'Settings' and enter your Cloudinary Cloud Name and Upload Preset to enable media uploads.");
+      setActiveTab('settings');
+      setShowSettings(true);
+      return;
+    }
+
     const id = Math.random().toString(36).substring(7);
     const localUrl = URL.createObjectURL(file);
 
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
 
     try {
-      let url = '';
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', uploadPreset);
 
-      if (cloudName && uploadPreset) {
-        // Use Cloudinary
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', uploadPreset);
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${type}/upload`, {
+        method: 'POST',
+        body: formData
+      });
 
-        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${type}/upload`, {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!response.ok) throw new Error("Cloudinary upload failed");
-        
-        const data = await response.json();
-        url = data.secure_url;
-      } else {
-        // Fallback to Firebase Storage
-        console.log("[Admin] Using Firebase Storage fallback...");
-        const storageRef = ref(storage, `content/${Date.now()}_${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        url = await getDownloadURL(snapshot.ref);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || "Cloudinary connection failed");
       }
+      
+      const data = await response.json();
+      const url = data.secure_url;
       
       if (target === 'article') {
         if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
@@ -314,11 +313,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url, progress: 100 } : p));
     } catch (error: any) {
       console.error("Upload failed:", error);
-      let errorMsg = `Upload failed: ${error.message}.`;
-      if (!cloudName) {
-        errorMsg += "\n\nTIP: Ensure 'Storage' is enabled in your Firebase Console and you have pasted the Storage Rules.";
-      }
-      alert(errorMsg);
+      alert(`CLOUD UPLOAD ERROR: ${error.message}\n\nTroubleshooting:\n1. Check your Cloud Name & Preset in Dashboard Settings\n2. Ensure Preset is set to 'UNSIGNED' in Cloudinary\n3. Check your internet connection.`);
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
     }
   };
@@ -483,10 +478,9 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           </div>
           <div className="flex items-center justify-between w-full md:w-auto gap-4">
-            <div className="flex gap-2">
+    <div className="flex gap-2">
               <button 
                 onClick={() => copyToClipboard(`
-// FIRESTORE RULES
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -494,21 +488,10 @@ service cloud.firestore {
     match /{collection=**} { allow read: if true; allow write: if isAdmin(); }
   }
 }
-
-// STORAGE RULES (Paste in Storage Tab)
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /{allPaths=**} {
-      allow read: if true;
-      allow write: if request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}");
-    }
-  }
-}
                 `.trim(), 'rules')} 
                 className="text-[9px] px-2 py-1 bg-bbc-red/20 text-bbc-red border border-bbc-red/30 rounded uppercase font-bold"
               >
-                {copyStatus === 'rules' ? 'All Rules Copied' : 'Rules'}
+                {copyStatus === 'rules' ? 'Rules Copied' : 'Rules'}
               </button>
             </div>
             <button onClick={onClose} className="hover:text-bbc-red transition-colors p-1">
@@ -602,7 +585,7 @@ service firebase.storage {
                   <Settings className="w-4 h-4" /> Storage Configuration
                 </h3>
                 <p className="text-sm text-blue-700 mb-4">
-                  By default, we use <strong>Firebase Storage</strong>. If you hit storage limits, you can switch to <strong>Cloudinary</strong> here.
+                  We use <strong>Cloudinary</strong> for free image and video hosting. This ensures your intelligence reports load fast and survive domain migrations.
                 </p>
                 <div className="space-y-4">
                   <div>
