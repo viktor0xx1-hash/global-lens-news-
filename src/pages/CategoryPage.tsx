@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs, QueryDocumentSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2, Edit3 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
-import { formatDate, slugify } from '../lib/utils';
+import { formatDate, slugify, updateMeta, updateSchema } from '../lib/utils';
 import { ShareModal, NewsReel } from '../components';
 
 interface Article {
@@ -35,6 +35,29 @@ export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, o
   useEffect(() => {
     setLoading(true);
     setHasMore(true);
+
+    // SEO Updates
+    const categoryName = categoryId === 'all' 
+      ? 'Full Archive' 
+      : (categoryId === 'geopolitics' ? 'World News & Geopolitics' : (categoryId?.charAt(0).toUpperCase() + categoryId?.slice(1)));
+    
+    const title = `${categoryName} Intelligence | Global Lens`;
+    const description = `Explore the latest ${categoryName.toLowerCase()} intelligence reports, breaking news, and deep analysis from Global Lens.`;
+    const path = `/category/${categoryId}`;
+    updateMeta(title, description, path);
+
+    // Schema.org for Collection
+    updateSchema('WebSite', {
+      "@type": "CollectionPage",
+      "name": title,
+      "description": description,
+      "url": `https://globallens.online${path}`,
+      "publisher": {
+        "@type": "Organization",
+        "name": "Global Lens"
+      }
+    });
+
     let q;
     const articlesRef = collection(db, 'articles');
     
@@ -170,24 +193,24 @@ export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, o
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
-                onClick={() => {
-                  const slug = slugify(article.title);
-                  const catSlug = article.category ? slugify(article.category) : 'intelligence';
-                  navigate(`/article/${catSlug}/${article.id}/${slug}`);
-                }}
-                className="group cursor-pointer border-b border-gray-50 pb-8 last:border-0"
+                className="group border-b border-gray-50 pb-8 last:border-0"
               >
-                <div className="aspect-video overflow-hidden bg-gray-100 mb-4 rounded-sm shadow-sm">
-                  <img 
-                    src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
-                    alt={article.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                <h4 className="font-serif font-bold text-xl mb-3 group-hover:text-bbc-red transition-colors leading-snug">
-                  {article.title}
-                </h4>
+                <Link 
+                  to={`/article/${article.category ? slugify(article.category) : 'intelligence'}/${article.id}/${slugify(article.title)}`}
+                  className="block"
+                >
+                  <div className="aspect-video overflow-hidden bg-gray-100 mb-4 rounded-sm shadow-sm">
+                    <img 
+                      src={article.imageUrls?.[0] || article.imageUrl || `https://picsum.photos/seed/${article.id}/600/338`} 
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <h4 className="font-serif font-bold text-xl mb-3 group-hover:text-bbc-red transition-colors leading-snug">
+                    {article.title}
+                  </h4>
+                </Link>
                 <div className="flex items-center gap-4 mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                    <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {formatDate(article.publishedAt)}</span>
                    {categoryId === 'all' && (

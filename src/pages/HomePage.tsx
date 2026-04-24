@@ -1,6 +1,16 @@
+import { useEffect } from 'react';
 import { NewsFeed, SupportCard, NewsReel } from '../components';
+import { updateMeta } from '../lib/utils';
 
 export default function HomePage({ isAdmin, handleEdit }: { isAdmin: boolean, handleEdit: (item: any) => void }) {
+  useEffect(() => {
+    updateMeta(
+      'Global Lens | Elite Intelligence & Geopolitical Reporting',
+      'Global Lens provides deep-dive intelligence reports, breaking geopolitical news, and strategic analysis from around the globe.',
+      '/'
+    );
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto">
       <NewsFeed 
