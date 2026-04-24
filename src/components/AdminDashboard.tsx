@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { db, storage, auth, handleFirestoreError, OperationType } from '../firebase';
+import { db, storage, auth, handleFirestoreError, OperationType, signInPopup } from '../firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
@@ -469,7 +469,25 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 relative">
-          {loading && (
+          {!user && !loading && (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mb-6">
+                <UserIcon className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest mb-2">Restricted Area</h3>
+              <p className="text-gray-500 text-sm mb-8 max-w-xs mx-auto">
+                Please sign in with your authorized administrator account to access the Intelligence Dashboard.
+              </p>
+              <button 
+                onClick={signInPopup}
+                className="px-8 py-3 bg-bbc-red text-white text-xs font-bold uppercase tracking-widest rounded shadow-lg hover:bg-red-700 transition-all transform hover:scale-105"
+              >
+                Sign In as Admin
+              </button>
+            </div>
+          )}
+
+          {user && loading && (
             <div className="absolute inset-0 bg-white/80 z-[60] flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
               <Loader2 className="w-12 h-12 animate-spin text-bbc-red mb-4" />
               <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest">
@@ -640,7 +658,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {(activeTab === 'article') && !showSettings && (
+          {(activeTab === 'article') && (
             <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Database className="w-3 h-3" /> Database Status:
@@ -653,7 +671,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {activeTab === 'article' && !showSettings && (
+          {activeTab === 'article' && (
             <form onSubmit={handlePostArticle} className="space-y-4">
               <input 
                 required

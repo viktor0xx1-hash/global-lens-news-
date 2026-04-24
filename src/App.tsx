@@ -13,9 +13,15 @@ import CategoryPage from './pages/CategoryPage';
 import AboutPage from './pages/AboutPage';
 
 function AppContent() {
-  const [showAdmin, setShowAdmin] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(() => sessionStorage.getItem('showAdmin') === 'true');
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Sync showAdmin with session storage to survive refreshes during auth transitions
+  useEffect(() => {
+    sessionStorage.setItem('showAdmin', showAdmin.toString());
+  }, [showAdmin]);
+
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<{ title: string, content: string } | null>(null);
