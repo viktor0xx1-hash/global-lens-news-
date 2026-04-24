@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { db, storage, auth, handleFirestoreError, OperationType, signInPopup } from '../firebase';
-import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, limit, doc, updateDoc, deleteDoc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { X, Send, FileText, Zap, ShieldAlert, Image as ImageIcon, Video as VideoIcon, Loader2, AlertCircle, CheckCircle2, User as UserIcon, Database, Edit3, Trash2, Settings, List } from 'lucide-react';
 
@@ -8,7 +8,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const [activeTab, setActiveTab] = useState<'article' | 'manage' | 'settings'>('article');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [version] = useState('v3.0-CLOUDINARY-STORAGE'); 
+  const [version] = useState('v3.1-FIRESTORE-SYNC'); 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [user, setUser] = useState(auth.currentUser);
   const [articlesList, setArticlesList] = useState<any[]>([]);
@@ -19,11 +19,26 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const [uploadPreset, setUploadPreset] = useState(localStorage.getItem('cloudinary_preset') || '');
   const [showSettings, setShowSettings] = useState(!localStorage.getItem('cloudinary_name'));
 
-  const saveSettings = () => {
-    localStorage.setItem('cloudinary_name', cloudName);
-    localStorage.setItem('cloudinary_preset', uploadPreset);
-    setShowSettings(false);
-    alert("Storage settings saved! You can now use the Gallery Upload.");
+  const saveSettings = async () => {
+    try {
+      localStorage.setItem('cloudinary_name', cloudName);
+      localStorage.setItem('cloudinary_preset', uploadPreset);
+      
+      if (user && user.email?.toLowerCase() === "viktor0xx1@gmail.com") {
+        await setDoc(doc(db, 'settings', 'storage'), {
+          cloudName,
+          uploadPreset,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.email
+        });
+      }
+      
+      setShowSettings(false);
+      alert("Intelligence Storage Configuration Saved! You can now upload media.");
+    } catch (err: any) {
+      console.error("Save settings error:", err);
+      alert("Failed to sync settings to Cloud. They are saved locally for this browser though.");
+    }
   };
   const [stats, setStats] = useState({ articles: 0 });
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -43,6 +58,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
       const dbDetails = {
         databaseId: (db as any)._databaseId?.database || 'unknown',
         projectId: (db as any)._databaseId?.projectId || 'unknown',
+        storageBucket: (storage as any)._bucket?.bucket || 'unknown',
         authUid: user?.uid,
         authEmail: user?.email
       };
@@ -77,7 +93,29 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(u => setUser(u));
-    
+    return () => unsubscribe();
+  }, []);
+
+  // Separate useEffect to sync settings when user is authenticated
+  useEffect(() => {
+    if (user && user.email?.toLowerCase() === "viktor0xx1@gmail.com") {
+      getDoc(doc(db, 'settings', 'storage')).then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.cloudName) {
+            setCloudName(data.cloudName);
+            localStorage.setItem('cloudinary_name', data.cloudName);
+          }
+          if (data.uploadPreset) {
+            setUploadPreset(data.uploadPreset);
+            localStorage.setItem('cloudinary_preset', data.uploadPreset);
+          }
+        }
+      }).catch(err => console.error("Settings sync error:", err));
+    }
+  }, [user]);
+
+  useEffect(() => {
     // Listen for stats to verify DB connection
     const unsubArticles = onSnapshot(collection(db, 'articles'), snap => {
       console.log("[Admin] Articles count update:", snap.size);
@@ -234,31 +272,36 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
   const uploading = previews.some(p => p.status === 'uploading');
 
   const handleFileUpload = async (file: File, type: 'image' | 'video', target: 'article' | 'update') => {
-    if (!cloudName || !uploadPreset) {
-      alert("Please configure your Cloudinary settings first! Click the Settings icon at the top.");
-      setActiveTab('settings');
-      return;
-    }
-
     const id = Math.random().toString(36).substring(7);
     const localUrl = URL.createObjectURL(file);
 
     setPreviews(prev => [...prev, { id, localUrl, type, progress: 0, status: 'uploading' }]);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', uploadPreset);
+      let url = '';
 
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${type}/upload`, {
-        method: 'POST',
-        body: formData
-      });
+      if (cloudName && uploadPreset) {
+        // Use Cloudinary
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', uploadPreset);
 
-      if (!response.ok) throw new Error("Cloudinary upload failed");
-      
-      const data = await response.json();
-      const url = data.secure_url;
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${type}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) throw new Error("Cloudinary upload failed");
+        
+        const data = await response.json();
+        url = data.secure_url;
+      } else {
+        // Fallback to Firebase Storage
+        console.log("[Admin] Using Firebase Storage fallback...");
+        const storageRef = ref(storage, `content/${Date.now()}_${file.name}`);
+        const snapshot = await uploadBytes(storageRef, file);
+        url = await getDownloadURL(snapshot.ref);
+      }
       
       if (target === 'article') {
         if (type === 'image') setArticle(prev => ({ ...prev, imageUrls: [...prev.imageUrls, url] }));
@@ -270,8 +313,12 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
 
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'done', remoteUrl: url, progress: 100 } : p));
     } catch (error: any) {
-      console.error("Cloudinary upload failed:", error);
-      alert(`Upload failed: ${error.message}. Check your Cloud Name and Preset.`);
+      console.error("Upload failed:", error);
+      let errorMsg = `Upload failed: ${error.message}.`;
+      if (!cloudName) {
+        errorMsg += "\n\nTIP: Ensure 'Storage' is enabled in your Firebase Console and you have pasted the Storage Rules.";
+      }
+      alert(errorMsg);
       setPreviews(prev => prev.map(p => p.id === id ? { ...p, status: 'error' } : p));
     }
   };
@@ -437,8 +484,31 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
           </div>
           <div className="flex items-center justify-between w-full md:w-auto gap-4">
             <div className="flex gap-2">
-              <button onClick={() => copyToClipboard(`rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    function isAdmin() { return request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}"); }\n    match /{collection=**} { allow read: if true; allow write: if isAdmin(); }\n  }\n}`, 'rules')} className="text-[9px] px-2 py-1 bg-bbc-red/20 text-bbc-red border border-bbc-red/30 rounded uppercase font-bold">
-                {copyStatus === 'rules' ? 'Rules Copied' : 'Rules'}
+              <button 
+                onClick={() => copyToClipboard(`
+// FIRESTORE RULES
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() { return request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}"); }
+    match /{collection=**} { allow read: if true; allow write: if isAdmin(); }
+  }
+}
+
+// STORAGE RULES (Paste in Storage Tab)
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null && (request.auth.token.email.matches("(?i)viktor0xx1@gmail\\\\.com") || request.auth.uid == "${user?.uid}");
+    }
+  }
+}
+                `.trim(), 'rules')} 
+                className="text-[9px] px-2 py-1 bg-bbc-red/20 text-bbc-red border border-bbc-red/30 rounded uppercase font-bold"
+              >
+                {copyStatus === 'rules' ? 'All Rules Copied' : 'Rules'}
               </button>
             </div>
             <button onClick={onClose} className="hover:text-bbc-red transition-colors p-1">
@@ -532,7 +602,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
                   <Settings className="w-4 h-4" /> Storage Configuration
                 </h3>
                 <p className="text-sm text-blue-700 mb-4">
-                  Since Firebase Storage requires a credit card, we use <strong>Cloudinary</strong> for free permanent storage.
+                  By default, we use <strong>Firebase Storage</strong>. If you hit storage limits, you can switch to <strong>Cloudinary</strong> here.
                 </p>
                 <div className="space-y-4">
                   <div>
