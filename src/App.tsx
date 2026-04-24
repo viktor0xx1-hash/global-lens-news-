@@ -4,6 +4,7 @@ import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView,
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { auth } from './firebase';
+import { updateMeta } from './lib/utils';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -19,6 +20,17 @@ function AppContent() {
   const [showSearch, setShowSearch] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<{ title: string, content: string } | null>(null);
   const location = useLocation();
+  const titleMap: Record<string, string> = {
+    '/': 'Global Lens | Geopolitical World News & Africa Updates',
+    '/about': 'About Our Geopolitical Perspective',
+  };
+
+  // Domain Guard: Redirect from .vercel.app to .online
+  useEffect(() => {
+    if (window.location.hostname.includes('.vercel.app')) {
+      window.location.replace(`https://globallens.online${window.location.pathname}${window.location.search}`);
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
@@ -33,9 +45,15 @@ function AppContent() {
     return () => unsubscribe();
   }, []);
 
-  // Reset scroll on navigation
+  // Reset scroll on navigation and update default meta
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Don't update meta here if it's an article page (handled in ArticlePage)
+    if (!location.pathname.startsWith('/article/')) {
+      const pageTitle = titleMap[location.pathname] || 'Intelligence Report';
+      updateMeta(pageTitle, undefined, location.pathname);
+    }
   }, [location.pathname]);
 
   const handleEdit = useCallback((item: any) => {

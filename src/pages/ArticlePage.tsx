@@ -5,6 +5,7 @@ import { db } from '../firebase';
 import { ArticleView } from '../components';
 import { motion } from 'motion/react';
 import { Loader2, ArrowLeft } from 'lucide-react';
+import { updateMeta, slugify } from '../lib/utils';
 
 export default function ArticlePage() {
   const { id } = useParams();
@@ -19,7 +20,15 @@ export default function ArticlePage() {
     // Use onSnapshot for better resiliency and caching behavior
     const unsubscribe = onSnapshot(doc(db, 'articles', id), (docSnap) => {
       if (docSnap.exists()) {
-        setArticle({ id: docSnap.id, ...docSnap.data() });
+        const data = docSnap.data();
+        setArticle({ id: docSnap.id, ...data });
+        
+        // Update SEO metadata
+        const title = data.title;
+        const summary = data.summary;
+        const category = data.category || 'intelligence';
+        const path = `/article/${slugify(category)}/${docSnap.id}/${slugify(title)}`;
+        updateMeta(title, summary, path);
       } else {
         setArticle(null);
       }

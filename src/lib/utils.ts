@@ -55,3 +55,39 @@ export function slugify(text: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 }
+
+/**
+ * Updates page metadata dynamically for better SEO and domain transition.
+ */
+export function updateMeta(title?: string, description?: string, path?: string) {
+  const baseUrl = 'https://globallens.online';
+  const fullUrl = path ? `${baseUrl}${path}` : baseUrl;
+
+  if (title) {
+    document.title = title.includes('Global Lens') ? title : `${title} | Global Lens`;
+  }
+  
+  // Canonical Link
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
+  }
+  canonical.setAttribute('href', fullUrl);
+  
+  // Update Meta Description
+  if (description) {
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', description);
+  }
+
+  // Update OG Tags
+  const ogUrl = document.querySelector('meta[property="og:url"]');
+  if (ogUrl) ogUrl.setAttribute('content', fullUrl);
+}
