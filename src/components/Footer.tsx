@@ -54,10 +54,26 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
                   ) : user ? (
                     <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-gray-300 lowercase italic font-normal truncate max-w-[150px]">{user.email}</span>
-                      <button onClick={logOut} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal underline text-left">Sign Out</button>
+                      <div className="flex gap-3">
+                        {isAdmin && (
+                          <button onClick={onAdminClick} className="text-bbc-dark hover:text-bbc-red transition-colors lowercase italic font-bold underline text-left">Dashboard</button>
+                        )}
+                        <button onClick={logOut} className="text-gray-400 hover:text-bbc-red transition-colors lowercase italic font-normal underline text-left">Sign Out</button>
+                      </div>
                     </div>
                   ) : (
-                    <button onClick={signInPopup} className="text-gray-300 hover:text-gray-500 transition-colors lowercase italic font-normal text-left">Staff Login</button>
+                    <button 
+                      onClick={() => {
+                        signInPopup().then(() => {
+                          // Note: the auth observer in App.tsx will handle the state update
+                          // but the user might expect the modal to open immediately
+                          onAdminClick();
+                        });
+                      }} 
+                      className="text-gray-300 hover:text-gray-500 transition-colors lowercase italic font-normal text-left"
+                    >
+                      Staff Login
+                    </button>
                   )}
                 </li>
               </ul>

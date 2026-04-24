@@ -474,20 +474,38 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
               <div className="w-16 h-16 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center mb-6">
                 <UserIcon className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest mb-2">Restricted Area</h3>
+              <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest mb-2">Editor Access</h3>
               <p className="text-gray-500 text-sm mb-8 max-w-xs mx-auto">
-                Please sign in with your authorized administrator account to access the Intelligence Dashboard.
+                Sign in with your authorized credentials to access the editorial suite.
               </p>
               <button 
                 onClick={signInPopup}
                 className="px-8 py-3 bg-bbc-red text-white text-xs font-bold uppercase tracking-widest rounded shadow-lg hover:bg-red-700 transition-all transform hover:scale-105"
               >
-                Sign In as Admin
+                Authenticate
               </button>
             </div>
           )}
 
-          {user && loading && (
+          {user && !loading && user.email?.toLowerCase() !== "viktor0xx1@gmail.com" && (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-16 h-16 bg-red-50 text-red-400 rounded-full flex items-center justify-center mb-6 border border-red-100">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest mb-2">Access Denied</h3>
+              <p className="text-gray-500 text-sm mb-4 max-w-xs mx-auto">
+                The account <strong>{user.email}</strong> is not authorized to edit this intelligence feed.
+              </p>
+              <button 
+                onClick={logOut}
+                className="text-bbc-red hover:underline text-xs font-bold uppercase tracking-widest"
+              >
+                Sign Out & Try Different Account
+              </button>
+            </div>
+          )}
+
+          {user && !loading && user.email?.toLowerCase() === "viktor0xx1@gmail.com" && loading && (
             <div className="absolute inset-0 bg-white/80 z-[60] flex flex-col items-center justify-center text-center p-6 backdrop-blur-[2px]">
               <Loader2 className="w-12 h-12 animate-spin text-bbc-red mb-4" />
               <h3 className="text-xl font-bold text-bbc-dark uppercase tracking-widest">
@@ -507,7 +525,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {activeTab === 'settings' && (
+          {user && user.email?.toLowerCase() === "viktor0xx1@gmail.com" && activeTab === 'settings' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                 <h3 className="text-blue-800 font-bold mb-2 flex items-center gap-2">
@@ -555,7 +573,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {activeTab === 'manage' && (
+          {user && user.email?.toLowerCase() === "viktor0xx1@gmail.com" && activeTab === 'manage' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
               <div className="space-y-4">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 border-b pb-2">Recent Articles</h3>
@@ -658,7 +676,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {(activeTab === 'article') && (
+          {user && user.email?.toLowerCase() === "viktor0xx1@gmail.com" && (activeTab === 'article') && (
             <div className="mb-6 flex items-center gap-4 p-3 bg-gray-50 rounded border border-gray-100">
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 <Database className="w-3 h-3" /> Database Status:
@@ -671,7 +689,7 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
             </div>
           )}
 
-          {activeTab === 'article' && (
+          {user && user.email?.toLowerCase() === "viktor0xx1@gmail.com" && activeTab === 'article' && (
             <form onSubmit={handlePostArticle} className="space-y-4">
               <input 
                 required
