@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -6,7 +6,7 @@ import { AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { slugify } from '../lib/utils';
 
-export default function BreakingNewsTicker() {
+export default memo(function BreakingNewsTicker() {
   const [news, setNews] = useState<any[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -67,4 +67,4 @@ export default function BreakingNewsTicker() {
       </div>
     </div>
   );
-}
+});

@@ -96,6 +96,7 @@ export default function ArticleView({ article }: { article: Article }) {
             alt={article.title}
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
+            loading="lazy"
           />
         </div>
       )}
@@ -123,13 +124,13 @@ export default function ArticleView({ article }: { article: Article }) {
                   
                   {idx === 0 && remainingImages[currentImageIdx] && (
                     <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
-                      <img src={remainingImages[currentImageIdx++]} alt="Context" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={remainingImages[currentImageIdx++]} alt="Context" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   )}
 
                   {idx === 1 && remainingImages[currentImageIdx] && (
                     <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
-                      <img src={remainingImages[currentImageIdx++]} alt="Evidence" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={remainingImages[currentImageIdx++]} alt="Evidence" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   )}
                 </div>
@@ -149,7 +150,7 @@ export default function ArticleView({ article }: { article: Article }) {
                   })}
                   {remainingImages.slice(currentImageIdx).map((url, i) => (
                     <div key={i} className="aspect-video overflow-hidden bg-gray-100 rounded-sm shadow-md">
-                      <img src={url} alt="Supplementary" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <img src={url} alt="Supplementary" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   ))}
                 </div>

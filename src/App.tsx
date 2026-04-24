@@ -1,6 +1,10 @@
 import { useState, lazy, Suspense, useEffect, useCallback } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Header, Footer, AdminDashboard, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker, SearchView } from './components';
+import { Header, Footer, ArticleView, PolicyView, BookmarksView, ErrorBoundary, BreakingNewsTicker } from './components';
+
+// Lazy load heavy management/search components
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const SearchView = lazy(() => import('./components/SearchView'));
 import { motion, AnimatePresence } from 'motion/react';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { auth } from './firebase';

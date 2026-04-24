@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { useNavigate, Link } from 'react-router-dom';
 import { slugify } from '../lib/utils';
 
-export default function NewsReel() {
+export default memo(function NewsReel() {
   const [articles, setArticles] = useState<any[]>([]);
   const navigate = useNavigate();
 
@@ -94,4 +94,4 @@ export default function NewsReel() {
       <div className="absolute top-0 bottom-0 right-0 w-32 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
     </div>
   );
-}
+});

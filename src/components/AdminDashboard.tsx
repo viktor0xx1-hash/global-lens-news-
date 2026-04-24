@@ -137,7 +137,6 @@ export default function AdminDashboard({ onClose, editItem }: { onClose: () => v
     });
 
     return () => {
-      unsubscribe();
       unsubArticles();
       unsubUpdates();
       unsubArticlesList();

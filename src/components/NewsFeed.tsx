@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, limit, startAfter, getDocs, QueryDocumentSnapshot } from 'firebase/firestore';
 import { motion } from 'motion/react';
@@ -29,7 +29,7 @@ const Skeleton = ({ className }: { className: string }) => (
   </div>
 );
 
-export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Article) => void, limitCount?: number }) {
+export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Article) => void, limitCount?: number }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -403,4 +403,4 @@ export default function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Ar
       )}
     </div>
   );
-}
+});
