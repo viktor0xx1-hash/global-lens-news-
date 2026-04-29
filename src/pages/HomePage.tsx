@@ -24,7 +24,7 @@ export default function HomePage({ isAdmin, handleEdit }: { isAdmin: boolean, ha
         <SupportCard variant="footer" />
         
         <div className="mt-16 text-center">
-          <h3 className="text-2xl font-serif font-bold text-bbc-dark mb-4 italic">Expansive Intelligence Deep Dives</h3>
+          <h2 className="text-2xl font-serif font-bold text-bbc-dark mb-4 italic">Expansive Intelligence Deep Dives</h2>
           <p className="text-gray-500 mb-16 max-w-lg mx-auto text-sm leading-relaxed uppercase tracking-widest font-bold opacity-80">
             Access our full spectrum of geopolitical, economic, and diplomatic reporting by selecting a sector above.
           </p>

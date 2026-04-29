@@ -2,7 +2,11 @@ import { motion } from 'motion/react';
 
 export default function Logo({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div 
+      className={`flex items-center gap-4 ${className}`}
+      role="img"
+      aria-label="Global Lens Intelligence Logo"
+    >
       <motion.div 
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

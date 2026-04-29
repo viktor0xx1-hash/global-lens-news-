@@ -57,7 +57,7 @@ export default function ArticleView({ article }: { article: Article }) {
           {article.title}
         </h1>
         
-        <div className="flex flex-wrap items-center gap-6 text-[10px] md:text-sm text-gray-500 font-medium uppercase tracking-wider border-y border-gray-100 py-6">
+        <div className="flex flex-wrap items-center gap-6 text-[10px] md:text-sm text-gray-600 font-medium uppercase tracking-wider border-y border-gray-100 py-6">
           <span className="flex items-center gap-2"><User className="w-4 h-4" /> By {article.author}</span>
           <span className="flex items-center gap-2"><Clock className="w-4 h-4" /> {formatDate(article.publishedAt, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
           <span className="flex items-center gap-2 text-bbc-red"><Tag className="w-4 h-4" /> {article.category}</span>
@@ -69,19 +69,20 @@ export default function ArticleView({ article }: { article: Article }) {
             <button 
               onClick={() => toggleBookmark(article.id)}
               className={`w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-all ${isBookmarked(article.id) ? 'bg-bbc-red text-white' : 'bg-gray-200 text-gray-600'}`}
+              aria-label={isBookmarked(article.id) ? "Remove from bookmarks" : "Save to bookmarks"}
             >
               <Bookmark className={`w-4 h-4 ${isBookmarked(article.id) ? 'fill-current' : ''}`} />
             </button>
-            <a href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center hover:scale-110 transition-transform">
+            <a href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center hover:scale-110 transition-transform" aria-label="Share on X (Twitter)">
               <Twitter className="w-4 h-4" />
             </a>
-            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform">
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center hover:scale-110 transition-transform" aria-label="Share on Facebook">
               <Facebook className="w-4 h-4" />
             </a>
-            <a href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform">
+            <a href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`} target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-[#25D366] text-white flex items-center justify-center hover:scale-110 transition-transform" aria-label="Share on WhatsApp">
               <MessageCircle className="w-4 h-4" />
             </a>
-            <button onClick={copyToClipboard} className={`w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <button onClick={copyToClipboard} className={`w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-all ${copied ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'}`} aria-label="Copy story link">
               {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
             </button>
           </div>
@@ -96,7 +97,6 @@ export default function ArticleView({ article }: { article: Article }) {
             alt={article.title}
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
-            loading="lazy"
           />
         </div>
       )}
@@ -124,13 +124,13 @@ export default function ArticleView({ article }: { article: Article }) {
                   
                   {idx === 0 && remainingImages[currentImageIdx] && (
                     <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
-                      <img src={remainingImages[currentImageIdx++]} alt="Context" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                      <img src={remainingImages[currentImageIdx++]} alt={`${article.title} - Visual context`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   )}
 
                   {idx === 1 && remainingImages[currentImageIdx] && (
                     <div className="my-12 aspect-video overflow-hidden bg-gray-100 shadow-lg rounded-sm">
-                      <img src={remainingImages[currentImageIdx++]} alt="Evidence" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                      <img src={remainingImages[currentImageIdx++]} alt={`${article.title} - Investigation proof`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   )}
                 </div>
@@ -139,7 +139,7 @@ export default function ArticleView({ article }: { article: Article }) {
               {/* Videos and more images */}
               {(article.videoUrls?.length || remainingImages.slice(currentImageIdx).length) > 0 && (
                 <div className="mt-16 space-y-8 pt-12 border-t border-gray-100">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400">Supporting Intelligence</h4>
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">Supporting Intelligence</h2>
                   {article.videoUrls?.map((url, i) => {
                     const id = getYouTubeId(url);
                     return (
@@ -150,7 +150,7 @@ export default function ArticleView({ article }: { article: Article }) {
                   })}
                   {remainingImages.slice(currentImageIdx).map((url, i) => (
                     <div key={i} className="aspect-video overflow-hidden bg-gray-100 rounded-sm shadow-md">
-                      <img src={url} alt="Supplementary" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
+                      <img src={url} alt={`${article.title} - Supplementary intelligence ${i + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
                     </div>
                   ))}
                 </div>
@@ -166,7 +166,7 @@ export default function ArticleView({ article }: { article: Article }) {
 
       <footer className="mt-20 pt-12 border-t border-gray-100 pb-12">
         <div className="bg-gray-50 p-8 text-center rounded">
-          <h4 className="text-xl font-serif font-bold mb-2">Global Lens Intelligence</h4>
+          <h2 className="text-xl font-serif font-bold mb-2">Global Lens Intelligence</h2>
           <p className="text-gray-600 font-serif italic text-sm">
             Reporting on the geopolitical forces that shape our borderless world.
           </p>

@@ -86,7 +86,7 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
             © 2026 Global Lens Intelligence. <br className="md:hidden" /> All Rights Reserved.
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600">
-            <a href="mailto:Globallens0247@gmail.com" className="hover:text-bbc-red flex items-center gap-2 group">
+            <a href="mailto:Globallens0247@gmail.com" className="hover:text-bbc-red flex items-center gap-2 group" aria-label="Send an email to Global Lens Intelligence">
               <Mail className="w-4 h-4 text-gray-400 group-hover:text-bbc-red transition-colors" />
               <span className="truncate max-w-[180px] sm:max-w-none">Reach via Gmail</span>
             </a>

@@ -91,10 +91,12 @@ export default function SearchView({ onClose, isAdmin, onEdit }: {
             className="flex-1 bg-transparent border-none outline-none text-lg md:text-2xl font-serif placeholder:text-gray-300"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search articles"
           />
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close search"
           >
             <X className="w-6 h-6 text-gray-500" />
           </button>
@@ -129,7 +131,7 @@ export default function SearchView({ onClose, isAdmin, onEdit }: {
                 >
                   {article.imageUrl && (
                     <div className="w-20 h-20 md:w-32 md:h-20 shrink-0 bg-gray-100 overflow-hidden rounded-sm">
-                      <img src={article.imageUrl} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                      <img src={article.imageUrl} className="w-full h-full object-cover" alt={article.title} referrerPolicy="no-referrer" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
