@@ -160,20 +160,25 @@ export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, o
     ? 'Full Archive' 
     : (categoryId === 'geopolitics' ? 'World News/Geopolitics' : (categoryId?.charAt(0).toUpperCase() + categoryId?.slice(1)));
 
-  if (loading) {
+  if (loading && articles.length === 0) {
     return (
-      <div className="py-24 text-center text-gray-400">
-        <div className="animate-pulse space-y-8">
-          <div className="h-8 w-48 bg-gray-200 mx-auto" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto px-4">
-            {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="space-y-4 text-left">
-                <div className="aspect-video bg-gray-200" />
-                <div className="h-6 bg-gray-200 w-3/4" />
-                <div className="h-4 bg-gray-200 w-full" />
-              </div>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-gray-100 pb-8 gap-4">
+          <div className="space-y-4">
+            <div className="h-4 w-24 bg-gray-100 animate-pulse" />
+            <div className="h-10 w-64 bg-gray-100 animate-pulse" />
+            <div className="h-4 w-32 bg-gray-100 animate-pulse" />
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="space-y-4">
+              <div className="aspect-video bg-gray-100 animate-pulse rounded-sm" />
+              <div className="h-6 bg-gray-100 animate-pulse w-3/4" />
+              <div className="h-4 bg-gray-100 animate-pulse w-full" />
+              <div className="h-4 bg-gray-100 animate-pulse w-5/6" />
+            </div>
+          ))}
         </div>
       </div>
     );

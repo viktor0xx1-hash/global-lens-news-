@@ -89,27 +89,37 @@ export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (articl
     }
   };
 
-  if (loading) {
+  if (loading && articles.length === 0) {
     return (
       <div className="space-y-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-8 space-y-4">
-            <Skeleton className="aspect-video w-full" />
+            <Skeleton className="aspect-video w-full rounded-sm" />
             <Skeleton className="h-10 w-3/4" />
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-6 w-1/2" />
           </div>
-          <div className="lg:col-span-4 space-y-8">
-            {[1, 2, 3].map(i => (
+          <div className="lg:col-span-4 space-y-6">
+            {[1, 2, 3, 4].map(i => (
               <div key={i} className="flex gap-4">
-                <Skeleton className="w-24 h-24 flex-shrink-0" />
+                <Skeleton className="w-20 md:w-24 h-20 md:h-24 flex-shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/4" />
                 </div>
               </div>
             ))}
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="aspect-video w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
         </div>
       </div>
     );
