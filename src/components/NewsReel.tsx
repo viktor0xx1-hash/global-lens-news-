@@ -43,7 +43,7 @@ export default memo(function NewsReel() {
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex" style={{ willChange: 'transform' }}>
         <motion.div 
           className="flex flex-nowrap"
           animate={{
@@ -52,7 +52,7 @@ export default memo(function NewsReel() {
           transition={{
             x: {
               repeat: Infinity,
-              duration: articles.length * 5, // Speed varies with amount of content
+              duration: articles.length * 10, // Slowed down slightly for better legibility and less CPU work
               ease: "linear",
             },
           }}

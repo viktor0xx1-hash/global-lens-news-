@@ -7,6 +7,7 @@ import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate, slugify } from '../lib/utils';
 import { useNavigate, Link } from 'react-router-dom';
 import ShareModal from './ShareModal';
+import { getCachedArticles, setCachedArticles } from '../services/newsService';
 
 interface Article {
   id: string;
@@ -30,10 +31,13 @@ const Skeleton = ({ className }: { className: string }) => (
 );
 
 export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (article: Article) => void, limitCount?: number }) {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `feed_${limitCount || 'default'}`;
+  const cached = getCachedArticles(cacheKey);
+
+  const [articles, setArticles] = useState<Article[]>(cached?.data || []);
+  const [loading, setLoading] = useState(!cached);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(cached?.lastDoc || null);
   const [hasMore, setHasMore] = useState(true);
   const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
   const { toggleBookmark, isBookmarked } = useUserPreferences();
@@ -47,8 +51,12 @@ export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (articl
       limit(fetchLimit)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[]);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[];
+      setArticles(data);
+      const last = snapshot.docs[snapshot.docs.length - 1] || null;
+      setLastDoc(last);
+      setCachedArticles(cacheKey, data, last);
+      
       if (snapshot.size < fetchLimit || limitCount) setHasMore(false);
       setLoading(false);
     }, (error) => {
@@ -57,7 +65,7 @@ export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (articl
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [limitCount]);
 
   const loadMore = async () => {
     if (!lastDoc || loadingMore) return;

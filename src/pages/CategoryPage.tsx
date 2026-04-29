@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot, where, limit, startAfter, getDocs, QueryDocumentSnapshot } from 'firebase/firestore';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Clock, Tag, Bookmark, Share2, ArrowLeft, ChevronRight, Loader2, Edit3 } from 'lucide-react';
 import { useUserPreferences } from '../contexts/UserPreferencesContext';
 import { formatDate, slugify, updateMeta, updateSchema } from '../lib/utils';
 import { ShareModal, NewsReel } from '../components';
+import { getCachedArticles, setCachedArticles } from '../services/newsService';
 
 interface Article {
   id: string;
@@ -24,16 +25,25 @@ interface Article {
 export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, onEdit?: (article: any) => void }) {
   const { categoryId } = useParams();
   const navigate = useNavigate();
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  const cacheKey = `cat_${categoryId}`;
+  const cached = getCachedArticles(cacheKey);
+
+  const [articles, setArticles] = useState<Article[]>(cached?.data || []);
+  const [loading, setLoading] = useState(!cached);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(cached?.lastDoc || null);
   const [hasMore, setHasMore] = useState(true);
   const [sharingArticle, setSharingArticle] = useState<Article | null>(null);
   const { toggleBookmark, isBookmarked } = useUserPreferences();
+  
+  const isFirstRender = useRef(true);
 
   useEffect(() => {
-    setLoading(true);
+    // Only show loading if we don't have cached data
+    if (!getCachedArticles(cacheKey)) {
+      setLoading(true);
+    }
     setHasMore(true);
 
     // SEO Updates
@@ -85,8 +95,12 @@ export default function CategoryPage({ isAdmin, onEdit }: { isAdmin?: boolean, o
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })) as Article[]);
-      setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) })) as Article[];
+      setArticles(data);
+      const last = snapshot.docs[snapshot.docs.length - 1] || null;
+      setLastDoc(last);
+      setCachedArticles(cacheKey, data, last);
+      
       if (snapshot.size < 12) setHasMore(false);
       setLoading(false);
     }, (error) => {
