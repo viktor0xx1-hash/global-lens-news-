@@ -96,6 +96,7 @@ export default function Header({ onAdminClick, onBookmarksClick, onSearchClick }
                   <button 
                     onClick={onAdminClick}
                     className="flex items-center gap-2 px-3 py-1.5 bg-bbc-dark text-white text-[10px] font-bold uppercase tracking-widest rounded hover:bg-black transition-all"
+                    aria-label="Open Admin Dashboard"
                   >
                     <LayoutDashboard className="w-3 h-3" /> Dashboard
                   </button>

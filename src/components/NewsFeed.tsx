@@ -223,6 +223,7 @@ export default memo(function NewsFeed({ onEdit, limitCount }: { onEdit?: (articl
                     onEdit(mainArticle);
                   }}
                   className="p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-bbc-red transition-colors"
+                  aria-label="Edit this article"
                   title="Edit Article"
                 >
                   <Edit3 className="w-3.5 h-3.5 md:w-5 md:h-5" />

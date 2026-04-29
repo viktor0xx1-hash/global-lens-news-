@@ -36,14 +36,14 @@ export default memo(function BreakingNewsTicker() {
     return () => clearInterval(interval);
   }, [news]);
 
-  if (news.length === 0) return null;
+  if (news.length === 0) return <div className="bg-bbc-red h-8 border-b border-white/10" aria-hidden="true" />;
 
   return (
-    <div className="bg-bbc-red text-white py-2 overflow-hidden border-b border-white/10">
+    <div className="bg-bbc-red text-white py-2 overflow-hidden border-b border-white/10 min-h-[32px]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-4">
         <div className="flex items-center gap-2 px-2 py-0.5 bg-white text-bbc-red text-[9px] font-black uppercase tracking-tighter rounded-sm shrink-0">
-          <AlertCircle className="w-3 h-3 animate-pulse" />
-          <span>Breaking</span>
+          <AlertCircle className="w-3 h-3 animate-pulse" aria-hidden="true" />
+          <h2 className="text-[9px] font-black uppercase tracking-tighter">Breaking</h2>
         </div>
         
         <div className="relative flex-1 h-4 group">

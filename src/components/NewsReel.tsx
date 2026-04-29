@@ -34,8 +34,8 @@ export default memo(function NewsReel() {
     <div className="w-full bg-gray-50 py-16 overflow-hidden border-y border-gray-100 mt-8 relative">
       <div className="max-w-7xl mx-auto px-4 mb-10 flex justify-between items-end">
         <div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-bbc-red mb-2 translate-y-1">The Archive</h4>
-          <h3 className="text-3xl font-serif font-bold italic text-bbc-dark">Intelligence Stream</h3>
+          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-bbc-red mb-2 translate-y-1">The Archive</h2>
+          <p className="text-3xl font-serif font-bold italic text-bbc-dark">Intelligence Stream</p>
         </div>
         <div className="flex flex-col items-end">
           <div className="w-12 h-0.5 bg-bbc-red mb-3"></div>

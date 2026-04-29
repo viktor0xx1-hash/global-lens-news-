@@ -42,7 +42,7 @@ export default function Footer({ onPolicyClick, onAdminClick }: { onPolicyClick:
           
           <div className="flex flex-col md:items-end">
             <div>
-              <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-8">Information Menu</h4>
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-8">Information Menu</h2>
               <ul className="space-y-4 text-xs font-bold uppercase tracking-widest text-bbc-dark">
                 <li><Link to="/about" className="hover:text-bbc-red transition-all hover:pl-2">About intelligence</Link></li>
                 <li><Link to="/category/all" className="hover:text-bbc-red transition-all hover:pl-2">The Archive</Link></li>
