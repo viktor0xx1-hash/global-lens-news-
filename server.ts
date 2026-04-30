@@ -72,6 +72,11 @@ async function startServer() {
         // Replace placeholders (handles both formats)
         html = html.replace(/<title>.*?<\/title>/, `<title>${title}</title>`);
         html = html.replace(/<meta name="description" content=".*?" \/>/, `<meta name="description" content="${description}" />`);
+        
+        // Dynamic Canonical Injection
+        const canonicalUrl = `https://globallens.online${url === '/' ? '' : url.split('?')[0]}`;
+        html = html.replace('</title>', `</title>\n    <link rel="canonical" href="${canonicalUrl}" />`);
+
         html = html.replace(/<meta property="og:title" content=".*?" \/>/, `<meta property="og:title" content="${title}" />`);
         html = html.replace(/<meta property="og:description" content=".*?" \/>/, `<meta property="og:description" content="${description}" />`);
         html = html.replace(/<meta property="og:url" content=".*?" \/>/, `<meta property="og:url" content="https://globallens.online${url}" />`);
